@@ -85,15 +85,28 @@ install -m 644 config/nginx.conf       /etc/nginx/nginx.conf
 mkdir -p /etc/nginx/conf.d
 install -m 644 config/nginx-vhost.conf /etc/nginx/conf.d/all-protocol.conf
 DOMAIN=$(cat /etc/xray/domain 2>/dev/null || cat /root/domain 2>/dev/null)
-[[ -n "$DOMAIN" ]] && sed -i "s|__DOMAIN__|$DOMAIN|g" /etc/nginx/conf.d/all-protocol.conf || warn "Domain belum tersimpan."
+if [[ -n "$DOMAIN" ]]; then
+    DOMAIN_RE=$(echo "$DOMAIN" | sed 's|\.|\\.|g')
+    sed -i "s|__DOMAIN__|$DOMAIN|g; s|__DOMAIN_RE__|$DOMAIN_RE|g" /etc/nginx/nginx.conf
+    sed -i "s|__DOMAIN__|$DOMAIN|g" /etc/nginx/conf.d/all-protocol.conf
+else
+    warn "Domain belum tersimpan - SNI multiplex 443 mungkin nge-route semua ke stunnel."
+fi
 
 install -m 644 config/stunnel.conf     /etc/stunnel/stunnel.conf
 [[ -s /etc/xray/xray.crt && -s /etc/xray/xray.key ]] \
     && cat /etc/xray/xray.key /etc/xray/xray.crt > /etc/stunnel/stunnel.pem \
-    || warn "Cert /etc/xray/xray.* hilang"
-chmod 640 /etc/stunnel/stunnel.pem 2>/dev/null
+    || warn "Cert /etc/xray/xray.* hilang - SSH-SSL tidak akan jalan!"
+chmod 644 /etc/stunnel/stunnel.pem 2>/dev/null
 chown root:root /etc/stunnel/stunnel.pem 2>/dev/null
 sed -i 's|^ENABLED=.*|ENABLED=1|' /etc/default/stunnel4 2>/dev/null || true
+
+# Buka firewall untuk SSH-SSL (443 mux + 777 langsung) bila ufw aktif
+if command -v ufw >/dev/null && ufw status 2>/dev/null | grep -q active; then
+    for p in 22 80 443 109 143 777 7100 7300; do
+        ufw allow $p/tcp >/dev/null 2>&1
+    done
+fi
 
 install -m 755 config/ws.py            /usr/local/bin/ws-py
 install -m 644 service/ws.service      /etc/systemd/system/ws.service

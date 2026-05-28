@@ -40,4 +40,23 @@ sline; echo -e "${CYAN}>>> Cert files${NC}"
 for f in /etc/xray/xray.crt /etc/xray/xray.key /etc/stunnel/stunnel.pem; do
     if [[ -s "$f" ]]; then ok "$f"; else fail "$f kosong/tidak ada"; fi
 done
+
+sline; echo -e "${CYAN}>>> SSH-SSL handshake test${NC}"
+test_ssl_port() {
+    local label="$1" host="$2" port="$3" sni_args="$4"
+    local out
+    out=$(timeout 5 bash -c "echo | openssl s_client -connect $host:$port $sni_args 2>/dev/null | head -c 200" || true)
+    if echo "$out" | grep -q '^SSH-2\.0-'; then
+        ok "$label ($host:$port) -> $(echo "$out" | head -1)"
+    elif echo "$out" | grep -q 'TLSv1'; then
+        warn "$label ($host:$port) -> TLS handshake OK tapi bukan SSH (mungkin nge-hit nginx HTTPS, bukan stunnel)"
+    else
+        fail "$label ($host:$port) tidak terhubung / no TLS"
+    fi
+}
+test_ssl_port "Stunnel direct  :777"  127.0.0.1 777  ""
+test_ssl_port "Stunnel backend :7443" 127.0.0.1 7443 ""
+test_ssl_port "Mux 443 no-SNI"        127.0.0.1 443  ""
+DOMAIN=$(cat /etc/xray/domain 2>/dev/null || cat /root/domain 2>/dev/null)
+[[ -n "$DOMAIN" ]] && test_ssl_port "Mux 443 SNI=$DOMAIN" 127.0.0.1 443 "-servername $DOMAIN"
 press_enter
