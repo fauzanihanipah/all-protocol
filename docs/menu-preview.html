@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>All-Protocol Tunnel — Menu Preview</title>
+<style>
+  :root{
+    --bg:#0c0f14; --fg:#e6e6e6;
+    --red:#ff6b6b; --green:#5dd25d; --yellow:#f3d669;
+    --blue:#5fa1ff; --cyan:#6be0e8; --white:#ffffff; --gray:#7a8290;
+  }
+  *{box-sizing:border-box}
+  body{background:#1a1d23;color:var(--fg);font-family:ui-sans-serif,system-ui,sans-serif;
+       margin:0;padding:32px;}
+  h1{margin:0 0 4px;font-size:22px}
+  p.lead{color:var(--gray);margin:0 0 24px}
+  h2{font-size:15px;color:var(--cyan);margin:28px 0 8px;text-transform:uppercase;
+     letter-spacing:1px;font-weight:600}
+  .term{
+    background:var(--bg); color:var(--fg);
+    border-radius:10px;
+    box-shadow:0 8px 28px rgba(0,0,0,.55), inset 0 0 0 1px #2b303b;
+    overflow:hidden; margin-bottom:20px;
+    font-family:'JetBrains Mono','Fira Code','Cascadia Code',Menlo,Consolas,monospace;
+    font-size:13.5px; line-height:1.5;
+  }
+  .bar{background:#22262e;padding:8px 14px;display:flex;gap:6px;align-items:center;
+       border-bottom:1px solid #2b303b}
+  .dot{width:12px;height:12px;border-radius:50%}
+  .dot.r{background:#ff5f57}.dot.y{background:#febc2e}.dot.g{background:#28c840}
+  .ttl{margin-left:10px;color:var(--gray);font-size:12px}
+  pre{margin:0;padding:18px 20px;white-space:pre;tab-size:2;overflow-x:auto}
+  .b{color:var(--blue)}
+  .c{color:var(--cyan)}
+  .g{color:var(--green)}
+  .y{color:var(--yellow)}
+  .r{color:var(--red)}
+  .w{color:var(--white)}
+  .gr{color:var(--gray)}
+  .bold{font-weight:700}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media (max-width:980px){.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<h1>All-Protocol Tunnel — Menu Preview</h1>
+<p class="lead">Render warna asli dari menu yang akan tampil di terminal VPS (layout 2-kolom).</p>
+
+<h2>1. Menu Utama (<code>menu</code>) — 2 Kolom</h2>
+<div class="term">
+  <div class="bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+       <div class="ttl">root@vps:~#&nbsp;menu</div></div>
+<pre><span class="b">╔══════════════════════════════════════════════════════════════════╗</span>
+<span class="b">║</span>                                                                  <span class="b">║</span>
+<span class="b">║</span>            <span class="c bold">ALL-PROTOCOL TUNNEL  --  CONTROL PANEL</span>                <span class="b">║</span>
+<span class="b">║</span>                                                                  <span class="b">║</span>
+<span class="b">╠══════════════════════════════════════════════════════════════════╣</span>
+<span class="b">║</span> <span class="w">IP        </span>: 103.94.190.215      <span class="b">│</span> <span class="w">ssh        </span>: <span class="g">ON</span>               <span class="b">║</span>
+<span class="b">║</span> <span class="w">Domain    </span>: tunnel.fauzan.dev   <span class="b">│</span> <span class="w">dropbear   </span>: <span class="g">ON</span>               <span class="b">║</span>
+<span class="b">║</span> <span class="w">Uptime    </span>: 3 days, 14h 22m     <span class="b">│</span> <span class="w">nginx      </span>: <span class="g">ON</span>               <span class="b">║</span>
+<span class="b">║</span> <span class="w">Memory    </span>: 412M / 2048M        <span class="b">│</span> <span class="w">xray       </span>: <span class="g">ON</span>               <span class="b">║</span>
+<span class="b">║</span> <span class="w">Load Avg  </span>: 0.08, 0.12, 0.15    <span class="b">│</span> <span class="w">stunnel4   </span>: <span class="g">ON</span>               <span class="b">║</span>
+<span class="b">║</span> <span class="w">Date      </span>: 2026-05-28 17:03    <span class="b">│</span> <span class="w">ws         </span>: <span class="g">ON</span>               <span class="b">║</span>
+<span class="b">║</span> <span class="w">BBR       </span>: <span class="g">ENABLED</span>             <span class="b">│</span> <span class="w">udpgw      </span>: <span class="g">ON</span>               <span class="b">║</span>
+<span class="b">║</span> <span class="w">IPv6      </span>: <span class="r">DISABLED</span>            <span class="b">│</span>                                <span class="b">║</span>
+<span class="b">╠══════════════════════════════════════════════════════════════════╣</span>
+<span class="b">║</span> <span class="w">Active Users</span>  :  <span class="y">SSH=4   VMess=7   VLess=3   Trojan=2</span>           <span class="b">║</span>
+<span class="b">╠══════════════════════════════════════════════════════════════════╣</span>
+<span class="b">║</span>   <span class="g">1</span>) Menu SSH / SSH-WS / SSL  <span class="b">│</span>  <span class="g">6</span>) Restart All Services       <span class="b">║</span>
+<span class="b">║</span>   <span class="g">2</span>) Menu V2Ray VMess         <span class="b">│</span>  <span class="g">7</span>) Toggle BBR                 <span class="b">║</span>
+<span class="b">║</span>   <span class="g">3</span>) Menu V2Ray VLess         <span class="b">│</span>  <span class="g">8</span>) Toggle IPv6                <span class="b">║</span>
+<span class="b">║</span>   <span class="g">4</span>) Menu Trojan              <span class="b">│</span>  <span class="g">9</span>) Update Script              <span class="b">║</span>
+<span class="b">║</span>   <span class="g">5</span>) Menu System              <span class="b">│</span>  <span class="r">0</span>) Exit                       <span class="b">║</span>
+<span class="b">╚══════════════════════════════════════════════════════════════════╝</span>
+                       Pilih menu : <span class="bold">_</span></pre>
+</div>
+
+<div class="row">
+  <div>
+    <h2>2. Toggle BBR</h2>
+    <div class="term">
+      <div class="bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+           <div class="ttl">toggle-bbr</div></div>
+<pre><span class="b">================================================================</span>
+<span class="c bold">                       TOGGLE TCP BBR</span>
+<span class="b">================================================================</span>
+  Status sekarang : congestion = <span class="y">cubic</span>   qdisc = <span class="y">fq_codel</span>
+<span class="b">----------------------------------------------------------------</span>
+  <span class="g">1</span>) Enable  BBR    (set fq + bbr, persistent)
+  <span class="g">2</span>) Disable BBR    (kembali ke cubic + fq_codel)
+  <span class="r">0</span>) Batal
+<span class="b">----------------------------------------------------------------</span>
+ Pilih: <span class="g">1</span>
+ <span class="g">[OK]</span> BBR berhasil di-ENABLE.  current = bbr
+
+ Tekan [Enter] untuk kembali...<span class="bold">_</span></pre>
+    </div>
+  </div>
+
+  <div>
+    <h2>3. Toggle IPv6</h2>
+    <div class="term">
+      <div class="bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+           <div class="ttl">toggle-ipv6</div></div>
+<pre><span class="b">================================================================</span>
+<span class="c bold">                       TOGGLE IPv6</span>
+<span class="b">================================================================</span>
+  Status sekarang : IPv6 = <span class="g">ENABLED</span>
+<span class="b">----------------------------------------------------------------</span>
+  <span class="g">1</span>) Disable IPv6  (matikan all/default/lo, persistent)
+  <span class="g">2</span>) Enable  IPv6  (aktifkan kembali)
+  <span class="r">0</span>) Batal
+<span class="b">----------------------------------------------------------------</span>
+ Pilih: <span class="g">1</span>
+ <span class="g">[OK]</span> IPv6 di-DISABLE.
+
+ Tekan [Enter] untuk kembali...<span class="bold">_</span></pre>
+    </div>
+  </div>
+</div>
+
+<h2>4. Submenu System (lengkap dengan BBR/IPv6/Update)</h2>
+<div class="term">
+  <div class="bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+       <div class="ttl">m-system</div></div>
+<pre><span class="b">================================================================</span>
+<span class="c bold">                       MENU  SYSTEM</span>
+<span class="b">================================================================</span>
+  <span class="g">1</span>) Status semua service
+  <span class="g">2</span>) Restart semua service
+  <span class="g">3</span>) Reboot VPS
+  <span class="g">4</span>) Cek bandwidth (vnstat)
+  <span class="g">5</span>) Cek port listening
+  <span class="g">6</span>) Cek detail spesifikasi VPS
+  <span class="g">7</span>) Renew SSL certificate
+  <span class="g">8</span>) Tampilkan info port
+  <span class="g">9</span>) Toggle BBR  (status: <span class="g">ENABLED</span>)
+  <span class="g">10</span>) Toggle IPv6 (status: <span class="r">DISABLED</span>)
+  <span class="g">11</span>) Update Script
+  <span class="r">0</span>) Kembali
+<span class="b">----------------------------------------------------------------</span>
+ Pilih menu: <span class="bold">_</span></pre>
+</div>
+
+<h2>5. Update Script</h2>
+<div class="term">
+  <div class="bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+       <div class="ttl">update-script</div></div>
+<pre><span class="b">================================================================</span>
+<span class="c bold">                       UPDATE SCRIPT</span>
+<span class="b">================================================================</span>
+ Pulling latest from https://github.com/fauzanihanipah/all-protocol.git ...
+ Already up to date.
+ <span class="g">[OK]</span> Update selesai. Menu/scripts versi terbaru sudah aktif.
+
+ Tekan [Enter] untuk kembali...<span class="bold">_</span></pre>
+</div>
+
+</body>
+</html>

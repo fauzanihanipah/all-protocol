@@ -11,6 +11,9 @@ echo -e "  ${GREEN}5${NC}) Cek port listening"
 echo -e "  ${GREEN}6${NC}) Cek detail spesifikasi VPS"
 echo -e "  ${GREEN}7${NC}) Renew SSL certificate"
 echo -e "  ${GREEN}8${NC}) Tampilkan info port"
+echo -e "  ${GREEN}9${NC}) Toggle BBR  (status: $(bbr_status))"
+echo -e "  ${GREEN}10${NC}) Toggle IPv6 (status: $(ipv6_status))"
+echo -e "  ${GREEN}11${NC}) Update Script"
 echo -e "  ${RED}0${NC}) Kembali"
 sline
 read -rp " Pilih menu: " opt
@@ -32,6 +35,8 @@ case $opt in
      echo " Cores : $(nproc)"
      echo " RAM   : $(free -h | awk '/Mem/{print $2}')"
      echo " Disk  : $(df -h / | awk 'NR==2{print $2" total, "$3" used, "$4" free"}')"
+     echo " BBR   : $(bbr_status)"
+     echo " IPv6  : $(ipv6_status)"
      press_enter ;;
   7) ~/.acme.sh/acme.sh --renew -d "$DOMAIN" --force --ecc \
         && ~/.acme.sh/acme.sh --installcert -d "$DOMAIN" --ecc \
@@ -59,6 +64,9 @@ case $opt in
   UDPGW          : 7100, 7300
 EOM
      press_enter ;;
+  9)  toggle-bbr   ;;
+  10) toggle-ipv6  ;;
+  11) update-script;;
   0) menu ;;
   *) fail "Pilihan tidak valid"; sleep 1 ;;
 esac

@@ -1,0 +1,31 @@
+#!/bin/bash
+. /usr/local/sbin/common.sh
+header "UPDATE SCRIPT"
+
+REPO="https://github.com/fauzanihanipah/all-protocol.git"
+DEST="/opt/all-protocol"
+
+if [[ -d "$DEST/.git" ]]; then
+    echo " Pulling latest from $REPO ..."
+    git -C "$DEST" pull --ff-only || { fail "git pull gagal"; press_enter; exit 1; }
+else
+    echo " Cloning fresh into $DEST ..."
+    rm -rf "$DEST"
+    git clone --depth 1 "$REPO" "$DEST" || { fail "git clone gagal"; press_enter; exit 1; }
+fi
+
+# reinstall menu, scripts, lib (keep current configs intact)
+install -m 755 "$DEST/menu/menu"     /usr/local/sbin/menu
+install -m 755 "$DEST/menu/m-ssh"    /usr/local/sbin/m-ssh
+install -m 755 "$DEST/menu/m-vmess"  /usr/local/sbin/m-vmess
+install -m 755 "$DEST/menu/m-vless"  /usr/local/sbin/m-vless
+install -m 755 "$DEST/menu/m-trojan" /usr/local/sbin/m-trojan
+install -m 755 "$DEST/menu/m-system" /usr/local/sbin/m-system
+
+for f in "$DEST"/user/*; do
+    install -m 755 "$f" "/usr/local/sbin/$(basename "$f")"
+done
+install -m 644 "$DEST/lib/common.sh" /usr/local/sbin/common.sh
+
+ok "Update selesai. Menu/scripts versi terbaru sudah aktif."
+press_enter

@@ -1,0 +1,32 @@
+#!/bin/bash
+. /usr/local/sbin/common.sh
+header "PAYLOAD SSH-WS  (TLS & NON-TLS)"
+cat <<EOF
+${BLUE}----------------------------------------------------------------${NC}
+ Domain         : $DOMAIN
+ IP             : $IP
+ Path WS        : /ssh-ws
+ SSH host:port  : 127.0.0.1:22
+${BLUE}════════════════════════════════════════════════════════════════${NC}
+                ${YELLOW}NON-TLS  (port 80,  SSL=OFF)${NC}
+${BLUE}----------------------------------------------------------------${NC}
+GET ws://$DOMAIN/ssh-ws HTTP/1.1[crlf]Host: $DOMAIN[crlf]Upgrade: websocket[crlf]Connection: Upgrade[crlf][crlf]
+${BLUE}----------------------------------------------------------------${NC}
+                ${YELLOW}TLS / WSS  (port 443,  SSL=ON,  SNI=$DOMAIN)${NC}
+${BLUE}----------------------------------------------------------------${NC}
+GET wss://$DOMAIN/ssh-ws HTTP/1.1[crlf]Host: $DOMAIN[crlf]Upgrade: websocket[crlf]Connection: Upgrade[crlf][crlf]
+${BLUE}----------------------------------------------------------------${NC}
+                ${YELLOW}FRONT INJECTION  (bypass / split header)${NC}
+${BLUE}----------------------------------------------------------------${NC}
+GET / HTTP/1.1[crlf]Host: $DOMAIN[crlf][crlf]GET wss://$DOMAIN/ssh-ws HTTP/1.1[crlf]Host: $DOMAIN[crlf]Upgrade: websocket[crlf][crlf]
+${BLUE}----------------------------------------------------------------${NC}
+                ${YELLOW}BUG-HOST INJECTION  (ganti BUGHOST manual)${NC}
+${BLUE}----------------------------------------------------------------${NC}
+GET / HTTP/1.1[crlf]Host: BUGHOST[crlf][crlf]GET ws://$DOMAIN/ssh-ws HTTP/1.1[crlf]Host: $DOMAIN[crlf]Upgrade: websocket[crlf][crlf]
+${BLUE}════════════════════════════════════════════════════════════════${NC}
+
+ Apps tested: HTTP Custom, HTTP Injector, KPN Tunnel Rev., eVPN, NetMod
+ Tip: untuk bypass via SNI bug, pakai SSH-SSL (bukan SSH-WS-TLS),
+      karena server ini multiplex 443 by SNI -> Stunnel saat SNI mismatch.
+EOF
+press_enter
