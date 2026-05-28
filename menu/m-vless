@@ -1,0 +1,25 @@
+#!/bin/bash
+. /usr/local/sbin/common.sh
+
+while :; do
+header "MENU  V2RAY VLESS"
+echo -e "  ${GREEN}1${NC}) Tambah Akun VLess"
+echo -e "  ${GREEN}2${NC}) Hapus Akun VLess"
+echo -e "  ${GREEN}3${NC}) List Akun VLess"
+echo -e "  ${GREEN}4${NC}) Akun Trial VLess (1 hari)"
+echo -e "  ${GREEN}5${NC}) Perpanjang masa aktif"
+echo -e "  ${GREEN}6${NC}) Restart Xray"
+echo -e "  ${RED}0${NC}) Kembali"
+sline
+read -rp " Pilih menu: " opt
+case $opt in
+  1) add-vless   ;;
+  2) del-vless   ;;
+  3) list-vless  ;;
+  4) trial-vless ;;
+  5) renew-vless ;;
+  6) systemctl restart xray; ok "Xray restarted."; press_enter ;;
+  0) menu ;;
+  *) fail "Pilihan tidak valid"; sleep 1 ;;
+esac
+done

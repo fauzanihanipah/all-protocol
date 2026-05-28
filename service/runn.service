@@ -1,0 +1,14 @@
+[Unit]
+Description=BadVPN UDPGW (UDP forwarder for SSH/SSL clients)
+After=network.target
+
+[Service]
+Type=simple
+ExecStartPre=/bin/sh -c '/usr/bin/pkill -f "badvpn-udpgw --listen-addr 127.0.0.1:7100" || true'
+ExecStart=/usr/local/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 500 --max-connections-for-client 10
+ExecStartPost=/bin/sh -c '/usr/local/bin/badvpn-udpgw --listen-addr 127.0.0.1:7100 --max-clients 500 --max-connections-for-client 10 &'
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

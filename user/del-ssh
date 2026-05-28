@@ -1,0 +1,23 @@
+#!/bin/bash
+. /usr/local/sbin/common.sh
+header "DELETE SSH USER"
+mapfile -t users < <(awk -F: '($3>=1000)&&($1!="nobody"){print $1}' /etc/passwd)
+if (( ${#users[@]} == 0 )); then
+    warn "Belum ada user SSH."; press_enter; exit
+fi
+i=0
+for u in "${users[@]}"; do
+    i=$((i+1))
+    expire=$(chage -l "$u" 2>/dev/null | awk -F: '/Account expires/{print $2}' | xargs)
+    printf "  %2d) %-20s exp: %s\n" "$i" "$u" "$expire"
+done
+sline
+read -rp " Pilih nomor user (0=batal): " n
+[[ -z "$n" || "$n" -le 0 || "$n" -gt ${#users[@]} ]] && { warn "Batal."; press_enter; exit; }
+target="${users[$((n-1))]}"
+read -rp " Hapus user $target? (y/N): " a
+[[ ! $a =~ ^[Yy]$ ]] && { warn "Batal."; press_enter; exit; }
+pkill -KILL -u "$target" 2>/dev/null
+userdel -r "$target" 2>/dev/null
+ok "User $target dihapus."
+press_enter

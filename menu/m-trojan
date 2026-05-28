@@ -1,0 +1,25 @@
+#!/bin/bash
+. /usr/local/sbin/common.sh
+
+while :; do
+header "MENU  TROJAN"
+echo -e "  ${GREEN}1${NC}) Tambah Akun Trojan"
+echo -e "  ${GREEN}2${NC}) Hapus Akun Trojan"
+echo -e "  ${GREEN}3${NC}) List Akun Trojan"
+echo -e "  ${GREEN}4${NC}) Akun Trial Trojan (1 hari)"
+echo -e "  ${GREEN}5${NC}) Perpanjang masa aktif"
+echo -e "  ${GREEN}6${NC}) Restart Xray"
+echo -e "  ${RED}0${NC}) Kembali"
+sline
+read -rp " Pilih menu: " opt
+case $opt in
+  1) add-trojan   ;;
+  2) del-trojan   ;;
+  3) list-trojan  ;;
+  4) trial-trojan ;;
+  5) renew-trojan ;;
+  6) systemctl restart xray; ok "Xray restarted."; press_enter ;;
+  0) menu ;;
+  *) fail "Pilihan tidak valid"; sleep 1 ;;
+esac
+done

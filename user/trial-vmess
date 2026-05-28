@@ -1,0 +1,31 @@
+#!/bin/bash
+. /usr/local/sbin/common.sh
+header "TRIAL VMESS (1 HARI)"
+user="trial$(shuf -i 100-999 -n1)"
+uuid=$(genuuid)
+exp_date=$(date -d "+1 day" +"%Y-%m-%d")
+exp_epoch=$(date -d "+1 day" +%s)
+
+client=$(jq -n --arg id "$uuid" --arg em "$user" --argjson exp "$exp_epoch" \
+   '{id:$id, alterId:0, email:$em, expiry:$exp}')
+xray_add_client "vmess-ws"   "$client"
+xray_add_client "vmess-grpc" "$client"
+xray_restart
+
+vmess_link() { echo "vmess://$(echo -n "$1" | base64 -w 0)"; }
+ws_tls=$(jq -n --arg add "$DOMAIN" --arg id "$uuid" --arg host "$DOMAIN" \
+  '{v:"2", ps:"trial-vmess", add:$add, port:"443", id:$id, aid:"0", net:"ws", type:"none", host:$host, path:"/vmess", tls:"tls", sni:$host}')
+
+cat <<EOF
+${BLUE}════════════════════════════════════════════════════════${NC}
+              ${CYAN}TRIAL VMESS (1 HARI)${NC}
+${BLUE}════════════════════════════════════════════════════════${NC}
+ Username : $user
+ UUID     : $uuid
+ Domain   : $DOMAIN
+ Expired  : $exp_date
+
+ Link     : $(vmess_link "$ws_tls")
+${BLUE}════════════════════════════════════════════════════════${NC}
+EOF
+press_enter

@@ -1,0 +1,24 @@
+#!/bin/bash
+. /usr/local/sbin/common.sh
+header "TRIAL SSH (1 HARI)"
+user="trial$(shuf -i 100-999 -n1)"
+pass=$(randpass)
+expire=$(date -d "+1 day" +"%Y-%m-%d")
+useradd -e "$expire" -s /bin/false -M "$user" >/dev/null 2>&1
+echo "$user:$pass" | chpasswd
+cat <<EOF
+
+${BLUE}════════════════════════════════════════════════════════${NC}
+              ${CYAN}AKUN TRIAL SSH (1 HARI)${NC}
+${BLUE}════════════════════════════════════════════════════════${NC}
+ Username  : $user
+ Password  : $pass
+ Domain    : $DOMAIN
+ IP        : $IP
+ Expired   : $expire
+${BLUE}--------------------------------------------------------${NC}
+ OpenSSH 22 | Dropbear 109,143 | SSH-WS 80/443 | SSH-SSL 443/777
+${BLUE}════════════════════════════════════════════════════════${NC}
+
+EOF
+press_enter

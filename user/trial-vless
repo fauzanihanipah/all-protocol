@@ -1,0 +1,28 @@
+#!/bin/bash
+. /usr/local/sbin/common.sh
+header "TRIAL VLESS (1 HARI)"
+user="trial$(shuf -i 100-999 -n1)"
+uuid=$(genuuid)
+exp_date=$(date -d "+1 day" +"%Y-%m-%d")
+exp_epoch=$(date -d "+1 day" +%s)
+
+client=$(jq -n --arg id "$uuid" --arg em "$user" --argjson exp "$exp_epoch" \
+   '{id:$id, email:$em, expiry:$exp}')
+xray_add_client "vless-ws" "$client"
+xray_add_client "vless-grpc" "$client"
+xray_restart
+
+link="vless://${uuid}@${DOMAIN}:443?encryption=none&security=tls&type=ws&host=${DOMAIN}&path=%2Fvless&sni=${DOMAIN}#trial-vless"
+cat <<EOF
+${BLUE}════════════════════════════════════════════════════════${NC}
+              ${CYAN}TRIAL VLESS (1 HARI)${NC}
+${BLUE}════════════════════════════════════════════════════════${NC}
+ Username : $user
+ UUID     : $uuid
+ Domain   : $DOMAIN
+ Expired  : $exp_date
+
+ Link     : $link
+${BLUE}════════════════════════════════════════════════════════${NC}
+EOF
+press_enter

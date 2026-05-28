@@ -1,0 +1,25 @@
+#!/bin/bash
+. /usr/local/sbin/common.sh
+
+while :; do
+header "MENU  V2RAY VMESS"
+echo -e "  ${GREEN}1${NC}) Tambah Akun VMess"
+echo -e "  ${GREEN}2${NC}) Hapus Akun VMess"
+echo -e "  ${GREEN}3${NC}) List Akun VMess"
+echo -e "  ${GREEN}4${NC}) Akun Trial VMess (1 hari)"
+echo -e "  ${GREEN}5${NC}) Perpanjang masa aktif"
+echo -e "  ${GREEN}6${NC}) Restart Xray"
+echo -e "  ${RED}0${NC}) Kembali"
+sline
+read -rp " Pilih menu: " opt
+case $opt in
+  1) add-vmess   ;;
+  2) del-vmess   ;;
+  3) list-vmess  ;;
+  4) trial-vmess ;;
+  5) renew-vmess ;;
+  6) systemctl restart xray; ok "Xray restarted."; press_enter ;;
+  0) menu ;;
+  *) fail "Pilihan tidak valid"; sleep 1 ;;
+esac
+done

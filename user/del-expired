@@ -1,0 +1,35 @@
+#!/bin/bash
+# Auto-delete expired users (SSH) and expired Xray clients.
+# Called every minute by cron.
+. /usr/local/sbin/common.sh
+
+now_epoch=$(date +%s)
+
+# ---- SSH (system users with expiry < today) ----
+for u in $(awk -F: '($3>=1000)&&($1!="nobody"){print $1}' /etc/passwd); do
+    exp=$(chage -l "$u" 2>/dev/null | awk -F: '/Account expires/{print $2}' | xargs)
+    [[ -z "$exp" || "$exp" == "never" ]] && continue
+    exp_epoch=$(date -d "$exp" +%s 2>/dev/null) || continue
+    if (( exp_epoch < now_epoch )); then
+        pkill -KILL -u "$u" 2>/dev/null
+        userdel -r "$u" >/dev/null 2>&1
+    fi
+done
+
+# ---- Xray clients ----
+# clients carry .expiry epoch (set by add-vmess/vless/trojan).
+tmp=$(mktemp)
+jq --argjson now "$now_epoch" '
+  .inbounds |= map(
+    if (.settings.clients|type == "array")
+    then .settings.clients |= map(select((.expiry // ($now+1)) | tonumber > $now))
+    else . end
+  )
+' "$XRAY_CONFIG" > "$tmp" && {
+   if ! cmp -s "$tmp" "$XRAY_CONFIG"; then
+       mv "$tmp" "$XRAY_CONFIG"
+       systemctl restart xray
+   else
+       rm -f "$tmp"
+   fi
+}

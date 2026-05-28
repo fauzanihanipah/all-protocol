@@ -1,0 +1,11 @@
+#!/bin/bash
+. /usr/local/sbin/common.sh
+header "PERPANJANG MASA AKTIF SSH"
+read -rp " Username        : " u
+id "$u" >/dev/null 2>&1 || { fail "User tidak ditemukan."; press_enter; exit; }
+read -rp " Tambah berapa hari: " d
+[[ -z "$d" ]] && d=30
+new_exp=$(date -d "+$d days" +"%Y-%m-%d")
+chage -E "$new_exp" "$u"
+ok "User $u diperpanjang sampai $new_exp"
+press_enter

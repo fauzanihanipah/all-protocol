@@ -1,0 +1,64 @@
+#!/bin/bash
+. /usr/local/sbin/common.sh
+header "ADD VMESS USER"
+read -rp " Username (email)   : " user
+[[ -z "$user" ]] && { fail "Username kosong."; press_enter; exit; }
+if jq -e --arg u "$user" '.inbounds[] | select(.tag=="vmess-ws") | .settings.clients[] | select(.email==$u)' "$XRAY_CONFIG" >/dev/null; then
+    fail "User $user sudah ada."; press_enter; exit
+fi
+read -rp " Masa aktif (hari)  : " days
+[[ -z "$days" ]] && days=30
+uuid=$(genuuid)
+exp_date=$(date -d "+$days days" +"%Y-%m-%d")
+exp_epoch=$(date -d "+$days days" +%s)
+
+client_ws=$(jq -n --arg id "$uuid" --arg em "$user" --argjson exp "$exp_epoch" \
+   '{id:$id, alterId:0, email:$em, expiry:$exp}')
+client_grpc=$(jq -n --arg id "$uuid" --arg em "$user" --argjson exp "$exp_epoch" \
+   '{id:$id, alterId:0, email:$em, expiry:$exp}')
+
+xray_add_client "vmess-ws"   "$client_ws"
+xray_add_client "vmess-grpc" "$client_grpc"
+xray_restart
+
+# Build vmess:// links
+vmess_link() {
+    local payload="$1"
+    echo "vmess://$(echo -n "$payload" | base64 -w 0)"
+}
+
+ws_tls=$(jq -n --arg add "$DOMAIN" --arg id "$uuid" --arg host "$DOMAIN" \
+  '{v:"2", ps:"vmess-ws-tls", add:$add, port:"443", id:$id, aid:"0", net:"ws", type:"none", host:$host, path:"/vmess", tls:"tls", sni:$host}')
+ws_ntls=$(jq -n --arg add "$DOMAIN" --arg id "$uuid" --arg host "$DOMAIN" \
+  '{v:"2", ps:"vmess-ws-ntls", add:$add, port:"80",  id:$id, aid:"0", net:"ws", type:"none", host:$host, path:"/vmess", tls:""}')
+grpc_tls=$(jq -n --arg add "$DOMAIN" --arg id "$uuid" --arg host "$DOMAIN" \
+  '{v:"2", ps:"vmess-grpc", add:$add, port:"443", id:$id, aid:"0", net:"grpc", type:"multi", host:$host, path:"vmess-grpc", tls:"tls", sni:$host}')
+
+cat <<EOF
+
+${BLUE}════════════════════════════════════════════════════════${NC}
+            ${CYAN}AKUN V2RAY VMESS BERHASIL DIBUAT${NC}
+${BLUE}════════════════════════════════════════════════════════${NC}
+ Username       : $user
+ Domain         : $DOMAIN
+ IP             : $IP
+ UUID           : $uuid
+ alterId        : 0
+ Expired        : $exp_date ($days hari)
+${BLUE}--------------------------------------------------------${NC}
+ VMess WS TLS   : 443  path /vmess   (SNI=$DOMAIN)
+ VMess WS NTLS  : 80   path /vmess
+ VMess gRPC     : 443  serviceName vmess-grpc
+${BLUE}--------------------------------------------------------${NC}
+ Link WS-TLS  :
+ $(vmess_link "$ws_tls")
+
+ Link WS-NTLS :
+ $(vmess_link "$ws_ntls")
+
+ Link gRPC    :
+ $(vmess_link "$grpc_tls")
+${BLUE}════════════════════════════════════════════════════════${NC}
+
+EOF
+press_enter

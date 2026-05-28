@@ -1,0 +1,29 @@
+#!/bin/bash
+. /usr/local/sbin/common.sh
+
+while :; do
+header "MENU  SSH / SSH-WS / SSH-SSL"
+echo -e "  ${GREEN}1${NC}) Tambah User SSH"
+echo -e "  ${GREEN}2${NC}) Hapus User SSH"
+echo -e "  ${GREEN}3${NC}) Cek User Login (online)"
+echo -e "  ${GREEN}4${NC}) List User SSH + masa aktif"
+echo -e "  ${GREEN}5${NC}) Buat User Trial (1 hari)"
+echo -e "  ${GREEN}6${NC}) Perpanjang masa aktif user"
+echo -e "  ${GREEN}7${NC}) Hapus user expired (manual)"
+echo -e "  ${GREEN}8${NC}) Restart SSH services"
+echo -e "  ${RED}0${NC}) Kembali"
+sline
+read -rp " Pilih menu: " opt
+case $opt in
+  1) add-ssh   ;;
+  2) del-ssh   ;;
+  3) cek-ssh   ;;
+  4) list-ssh  ;;
+  5) trial-ssh ;;
+  6) renew-ssh ;;
+  7) del-expired ; ok "Selesai." ; press_enter ;;
+  8) systemctl restart ssh dropbear stunnel4 ws ; ok "Restarted." ; press_enter ;;
+  0) menu ;;
+  *) fail "Pilihan tidak valid"; sleep 1 ;;
+esac
+done

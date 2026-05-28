@@ -1,0 +1,28 @@
+#!/bin/bash
+. /usr/local/sbin/common.sh
+header "TRIAL TROJAN (1 HARI)"
+user="trial$(shuf -i 100-999 -n1)"
+password=$(genuuid)
+exp_date=$(date -d "+1 day" +"%Y-%m-%d")
+exp_epoch=$(date -d "+1 day" +%s)
+
+client=$(jq -n --arg p "$password" --arg em "$user" --argjson exp "$exp_epoch" \
+   '{password:$p, email:$em, expiry:$exp}')
+xray_add_client "trojan-ws"   "$client"
+xray_add_client "trojan-grpc" "$client"
+xray_restart
+
+link="trojan://${password}@${DOMAIN}:443?security=tls&type=ws&host=${DOMAIN}&path=%2Ftrojan-ws&sni=${DOMAIN}#trial-trojan"
+cat <<EOF
+${BLUE}════════════════════════════════════════════════════════${NC}
+              ${CYAN}TRIAL TROJAN (1 HARI)${NC}
+${BLUE}════════════════════════════════════════════════════════${NC}
+ Username : $user
+ Password : $password
+ Domain   : $DOMAIN
+ Expired  : $exp_date
+
+ Link     : $link
+${BLUE}════════════════════════════════════════════════════════${NC}
+EOF
+press_enter

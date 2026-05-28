@@ -1,0 +1,23 @@
+#!/bin/bash
+. /usr/local/sbin/common.sh
+header "DELETE TROJAN USER"
+mapfile -t emails < <(jq -r '.inbounds[]|select(.tag=="trojan-ws")|.settings.clients[].email' "$XRAY_CONFIG")
+(( ${#emails[@]} == 0 )) && { warn "Belum ada user Trojan."; press_enter; exit; }
+i=0
+for e in "${emails[@]}"; do
+    i=$((i+1))
+    exp=$(jq -r --arg e "$e" '.inbounds[]|select(.tag=="trojan-ws")|.settings.clients[]|select(.email==$e)|.expiry' "$XRAY_CONFIG")
+    [[ "$exp" == "null" ]] && exp_str="never" || exp_str=$(date -d "@$exp" +"%Y-%m-%d")
+    printf "  %2d) %-25s exp: %s\n" "$i" "$e" "$exp_str"
+done
+sline
+read -rp " Pilih nomor (0=batal): " n
+[[ -z "$n" || "$n" -le 0 || "$n" -gt ${#emails[@]} ]] && { warn "Batal."; press_enter; exit; }
+target="${emails[$((n-1))]}"
+read -rp " Hapus $target? (y/N): " a
+[[ ! $a =~ ^[Yy]$ ]] && { warn "Batal."; press_enter; exit; }
+xray_del_client "trojan-ws"   email "$target"
+xray_del_client "trojan-grpc" email "$target"
+xray_restart
+ok "User Trojan $target dihapus."
+press_enter

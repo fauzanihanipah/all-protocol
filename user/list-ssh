@@ -1,0 +1,26 @@
+#!/bin/bash
+. /usr/local/sbin/common.sh
+header "LIST USER SSH"
+printf " %-3s %-20s %-15s %s\n" "NO" "USERNAME" "EXPIRED" "STATUS"
+sline
+i=0
+for u in $(awk -F: '($3>=1000)&&($1!="nobody"){print $1}' /etc/passwd); do
+    i=$((i+1))
+    exp=$(chage -l "$u" 2>/dev/null | awk -F: '/Account expires/{print $2}' | xargs)
+    if [[ "$exp" == "never" ]]; then
+        st="${GREEN}active${NC}"
+    else
+        sec_left=$(( $(date -d "$exp" +%s 2>/dev/null) - $(date +%s) ))
+        if (( sec_left < 0 )); then
+            st="${RED}expired${NC}"
+        elif (( sec_left < 86400*3 )); then
+            st="${YELLOW}<3 days${NC}"
+        else
+            st="${GREEN}active${NC}"
+        fi
+    fi
+    printf " %-3s %-20s %-15s %b\n" "$i" "$u" "$exp" "$st"
+done
+sline
+echo " Total user: $i"
+press_enter

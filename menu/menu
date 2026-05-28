@@ -1,0 +1,61 @@
+#!/bin/bash
+# Main Menu - All Protocol Tunnel
+. /usr/local/sbin/common.sh
+
+ip_local=$(ifconfig 2>/dev/null | grep -m1 'inet ' | awk '{print $2}')
+[[ -z "$ip_local" ]] && ip_local="$IP"
+domain=$(cat /etc/xray/domain 2>/dev/null)
+uptime_str=$(uptime -p 2>/dev/null | sed 's/up //')
+ram_used=$(free -m | awk '/Mem/ {print $3"M / "$2"M"}')
+load_avg=$(awk '{print $1", "$2", "$3}' /proc/loadavg)
+date_now=$(date '+%Y-%m-%d %H:%M:%S')
+
+# count active users
+ssh_n=$(awk -F: '($3>=1000)&&($1!="nobody"){print $1}' /etc/passwd | wc -l)
+vmess_n=$(jq '[.inbounds[] | select(.tag=="vmess-ws") | .settings.clients[]] | length' "$XRAY_CONFIG" 2>/dev/null)
+vless_n=$(jq '[.inbounds[] | select(.tag=="vless-ws") | .settings.clients[]] | length' "$XRAY_CONFIG" 2>/dev/null)
+trojan_n=$(jq '[.inbounds[] | select(.tag=="trojan-ws") | .settings.clients[]] | length' "$XRAY_CONFIG" 2>/dev/null)
+
+# service status
+svc() {
+  systemctl is-active --quiet "$1" \
+    && echo -e "${GREEN}ON${NC} " \
+    || echo -e "${RED}OFF${NC}"
+}
+
+clear
+echo -e "${BLUE}╔══════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}║${CYAN}            ALL-PROTOCOL TUNNEL  -  CONTROL PANEL             ${BLUE}║${NC}"
+echo -e "${BLUE}╠══════════════════════════════════════════════════════════════╣${NC}"
+printf "${BLUE}║${NC} ${WHITE}IP        ${NC}: %-49s${BLUE}║${NC}\n" "$ip_local"
+printf "${BLUE}║${NC} ${WHITE}Domain    ${NC}: %-49s${BLUE}║${NC}\n" "$domain"
+printf "${BLUE}║${NC} ${WHITE}Uptime    ${NC}: %-49s${BLUE}║${NC}\n" "$uptime_str"
+printf "${BLUE}║${NC} ${WHITE}Load Avg  ${NC}: %-49s${BLUE}║${NC}\n" "$load_avg"
+printf "${BLUE}║${NC} ${WHITE}Memory    ${NC}: %-49s${BLUE}║${NC}\n" "$ram_used"
+printf "${BLUE}║${NC} ${WHITE}Date      ${NC}: %-49s${BLUE}║${NC}\n" "$date_now"
+echo -e "${BLUE}╠══════════════════════════════════════════════════════════════╣${NC}"
+printf "${BLUE}║${NC} Service : ssh $(svc ssh)  dropbear $(svc dropbear)  nginx $(svc nginx)  xray $(svc xray)  ${BLUE}║${NC}\n"
+printf "${BLUE}║${NC}           stunnel4 $(svc stunnel4)  ws $(svc ws)  udpgw $(svc runn)            ${BLUE}║${NC}\n"
+echo -e "${BLUE}╠══════════════════════════════════════════════════════════════╣${NC}"
+printf "${BLUE}║${NC} Active users : ${YELLOW}SSH=%-3s  VMess=%-3s  VLess=%-3s  Trojan=%-3s${NC}        ${BLUE}║${NC}\n" "$ssh_n" "$vmess_n" "$vless_n" "$trojan_n"
+echo -e "${BLUE}╠══════════════════════════════════════════════════════════════╣${NC}"
+echo -e "${BLUE}║${NC}  ${GREEN}1${NC}) Menu SSH / SSH-WS / SSH-SSL                              ${BLUE}║${NC}"
+echo -e "${BLUE}║${NC}  ${GREEN}2${NC}) Menu V2Ray VMess                                         ${BLUE}║${NC}"
+echo -e "${BLUE}║${NC}  ${GREEN}3${NC}) Menu V2Ray VLess                                         ${BLUE}║${NC}"
+echo -e "${BLUE}║${NC}  ${GREEN}4${NC}) Menu Trojan                                              ${BLUE}║${NC}"
+echo -e "${BLUE}║${NC}  ${GREEN}5${NC}) Menu System                                              ${BLUE}║${NC}"
+echo -e "${BLUE}║${NC}  ${GREEN}6${NC}) Restart All Services                                     ${BLUE}║${NC}"
+echo -e "${BLUE}║${NC}  ${RED}0${NC}) Exit                                                     ${BLUE}║${NC}"
+echo -e "${BLUE}╚══════════════════════════════════════════════════════════════╝${NC}"
+read -rp " Pilih menu: " opt
+case $opt in
+  1) m-ssh ;;
+  2) m-vmess ;;
+  3) m-vless ;;
+  4) m-trojan ;;
+  5) m-system ;;
+  6) systemctl restart ssh dropbear nginx xray stunnel4 ws runn 2>/dev/null
+     ok "Semua service di-restart."; press_enter ; menu ;;
+  0) clear; exit 0 ;;
+  *) fail "Pilihan tidak valid"; sleep 1; menu ;;
+esac

@@ -1,0 +1,46 @@
+#!/bin/bash
+. /usr/local/sbin/common.sh
+header "ADD TROJAN USER"
+read -rp " Username (email)   : " user
+[[ -z "$user" ]] && { fail "Username kosong."; press_enter; exit; }
+if jq -e --arg u "$user" '.inbounds[]|select(.tag=="trojan-ws")|.settings.clients[]|select(.email==$u)' "$XRAY_CONFIG" >/dev/null; then
+    fail "User $user sudah ada."; press_enter; exit
+fi
+read -rp " Masa aktif (hari)  : " days
+[[ -z "$days" ]] && days=30
+password=$(genuuid)
+exp_date=$(date -d "+$days days" +"%Y-%m-%d")
+exp_epoch=$(date -d "+$days days" +%s)
+
+client=$(jq -n --arg p "$password" --arg em "$user" --argjson exp "$exp_epoch" \
+   '{password:$p, email:$em, expiry:$exp}')
+xray_add_client "trojan-ws"   "$client"
+xray_add_client "trojan-grpc" "$client"
+xray_restart
+
+ws_tls="trojan://${password}@${DOMAIN}:443?security=tls&type=ws&host=${DOMAIN}&path=%2Ftrojan-ws&sni=${DOMAIN}#trojan-ws-tls"
+grpc_tls="trojan://${password}@${DOMAIN}:443?security=tls&type=grpc&serviceName=trojan-grpc&sni=${DOMAIN}#trojan-grpc"
+
+cat <<EOF
+
+${BLUE}════════════════════════════════════════════════════════${NC}
+            ${CYAN}AKUN TROJAN BERHASIL DIBUAT${NC}
+${BLUE}════════════════════════════════════════════════════════${NC}
+ Username       : $user
+ Domain         : $DOMAIN
+ IP             : $IP
+ Password       : $password
+ Expired        : $exp_date ($days hari)
+${BLUE}--------------------------------------------------------${NC}
+ Trojan WS TLS  : 443  path /trojan-ws  (SNI=$DOMAIN)
+ Trojan gRPC    : 443  serviceName trojan-grpc
+${BLUE}--------------------------------------------------------${NC}
+ Link WS-TLS  :
+ $ws_tls
+
+ Link gRPC    :
+ $grpc_tls
+${BLUE}════════════════════════════════════════════════════════${NC}
+
+EOF
+press_enter

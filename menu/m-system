@@ -1,0 +1,65 @@
+#!/bin/bash
+. /usr/local/sbin/common.sh
+
+while :; do
+header "MENU  SYSTEM"
+echo -e "  ${GREEN}1${NC}) Status semua service"
+echo -e "  ${GREEN}2${NC}) Restart semua service"
+echo -e "  ${GREEN}3${NC}) Reboot VPS"
+echo -e "  ${GREEN}4${NC}) Cek bandwidth (vnstat)"
+echo -e "  ${GREEN}5${NC}) Cek port listening"
+echo -e "  ${GREEN}6${NC}) Cek detail spesifikasi VPS"
+echo -e "  ${GREEN}7${NC}) Renew SSL certificate"
+echo -e "  ${GREEN}8${NC}) Tampilkan info port"
+echo -e "  ${RED}0${NC}) Kembali"
+sline
+read -rp " Pilih menu: " opt
+case $opt in
+  1)
+     for s in ssh dropbear nginx xray stunnel4 ws runn ; do
+        printf "  %-12s : " "$s"
+        systemctl is-active --quiet $s && echo -e "${GREEN}running${NC}" || echo -e "${RED}stopped${NC}"
+     done
+     press_enter ;;
+  2) systemctl restart ssh dropbear nginx xray stunnel4 ws runn 2>/dev/null
+     ok "All services restarted." ; press_enter ;;
+  3) read -rp " Yakin reboot VPS? (y/N): " a; [[ $a =~ ^[Yy]$ ]] && reboot ;;
+  4) vnstat || warn "vnstat belum punya data, tunggu beberapa menit."; press_enter ;;
+  5) ss -tlnp | head -50 ; press_enter ;;
+  6) echo " OS    : $(. /etc/os-release; echo $PRETTY_NAME)"
+     echo " Kernel: $(uname -r)"
+     echo " CPU   : $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2 | xargs)"
+     echo " Cores : $(nproc)"
+     echo " RAM   : $(free -h | awk '/Mem/{print $2}')"
+     echo " Disk  : $(df -h / | awk 'NR==2{print $2" total, "$3" used, "$4" free"}')"
+     press_enter ;;
+  7) ~/.acme.sh/acme.sh --renew -d "$DOMAIN" --force --ecc \
+        && ~/.acme.sh/acme.sh --installcert -d "$DOMAIN" --ecc \
+              --fullchain-file /etc/xray/xray.crt \
+              --key-file /etc/xray/xray.key \
+        && cat /etc/xray/xray.key /etc/xray/xray.crt > /etc/stunnel/stunnel.pem \
+        && systemctl restart nginx xray stunnel4
+     ok "Renew selesai." ; press_enter ;;
+  8) cat <<EOM
+  Domain         : $DOMAIN
+  IP             : $IP
+  OpenSSH        : 22
+  Dropbear       : 109, 143
+  SSH-WS NTLS    : 80      path /ssh-ws
+  SSH-WS TLS     : 443     path /ssh-ws (SNI=$DOMAIN)
+  SSH-SSL        : 443     (no/other SNI)  + 777 langsung
+  VMess WS NTLS  : 80      path /vmess
+  VMess WS TLS   : 443     path /vmess
+  VMess gRPC     : 443     serviceName vmess-grpc
+  VLess WS NTLS  : 80      path /vless
+  VLess WS TLS   : 443     path /vless
+  VLess gRPC     : 443     serviceName vless-grpc
+  Trojan WS TLS  : 443     path /trojan-ws
+  Trojan gRPC    : 443     serviceName trojan-grpc
+  UDPGW          : 7100, 7300
+EOM
+     press_enter ;;
+  0) menu ;;
+  *) fail "Pilihan tidak valid"; sleep 1 ;;
+esac
+done

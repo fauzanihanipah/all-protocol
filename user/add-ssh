@@ -1,0 +1,41 @@
+#!/bin/bash
+. /usr/local/sbin/common.sh
+header "ADD SSH USER"
+read -rp " Username       : " user
+[[ -z "$user" ]] && { fail "Username kosong."; press_enter; exit; }
+if id "$user" >/dev/null 2>&1; then
+    fail "User $user sudah ada."; press_enter; exit
+fi
+read -rp " Password       : " pass
+[[ -z "$pass" ]] && pass=$(randpass)
+read -rp " Masa aktif (hari): " days
+[[ -z "$days" ]] && days=30
+expire=$(date -d "+$days days" +"%Y-%m-%d")
+
+useradd -e "$expire" -s /bin/false -M "$user" >/dev/null 2>&1
+echo "$user:$pass" | chpasswd
+
+cat <<EOF
+
+${BLUE}════════════════════════════════════════════════════════${NC}
+            ${CYAN}AKUN SSH BERHASIL DIBUAT${NC}
+${BLUE}════════════════════════════════════════════════════════${NC}
+ Username       : $user
+ Password       : $pass
+ Domain         : $DOMAIN
+ IP             : $IP
+ Expired        : $expire ($days hari)
+${BLUE}--------------------------------------------------------${NC}
+ Port OpenSSH   : 22
+ Port Dropbear  : 109, 143
+ SSH-WS NTLS    : 80      path /ssh-ws
+ SSH-WS TLS     : 443     path /ssh-ws (SNI=$DOMAIN)
+ SSH-SSL        : 443 (default fallback) atau 777
+ UDPGW          : 7100, 7300
+${BLUE}════════════════════════════════════════════════════════${NC}
+
+  HTTP Custom Payload sample:
+    GET wss://$DOMAIN/ssh-ws HTTP/1.1[crlf]Host: $DOMAIN[crlf]Upgrade: websocket[crlf][crlf]
+
+EOF
+press_enter

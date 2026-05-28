@@ -1,0 +1,53 @@
+#!/bin/bash
+. /usr/local/sbin/common.sh
+header "ADD VLESS USER"
+read -rp " Username (email)   : " user
+[[ -z "$user" ]] && { fail "Username kosong."; press_enter; exit; }
+if jq -e --arg u "$user" '.inbounds[]|select(.tag=="vless-ws")|.settings.clients[]|select(.email==$u)' "$XRAY_CONFIG" >/dev/null; then
+    fail "User $user sudah ada."; press_enter; exit
+fi
+read -rp " Masa aktif (hari)  : " days
+[[ -z "$days" ]] && days=30
+uuid=$(genuuid)
+exp_date=$(date -d "+$days days" +"%Y-%m-%d")
+exp_epoch=$(date -d "+$days days" +%s)
+
+client=$(jq -n --arg id "$uuid" --arg em "$user" --argjson exp "$exp_epoch" \
+   '{id:$id, email:$em, expiry:$exp}')
+
+xray_add_client "vless-ws"   "$client"
+xray_add_client "vless-grpc" "$client"
+xray_restart
+
+ws_tls="vless://${uuid}@${DOMAIN}:443?encryption=none&security=tls&type=ws&host=${DOMAIN}&path=%2Fvless&sni=${DOMAIN}#vless-ws-tls"
+ws_ntls="vless://${uuid}@${DOMAIN}:80?encryption=none&security=none&type=ws&host=${DOMAIN}&path=%2Fvless#vless-ws-ntls"
+grpc_tls="vless://${uuid}@${DOMAIN}:443?encryption=none&security=tls&type=grpc&serviceName=vless-grpc&sni=${DOMAIN}#vless-grpc"
+
+cat <<EOF
+
+${BLUE}════════════════════════════════════════════════════════${NC}
+            ${CYAN}AKUN V2RAY VLESS BERHASIL DIBUAT${NC}
+${BLUE}════════════════════════════════════════════════════════${NC}
+ Username       : $user
+ Domain         : $DOMAIN
+ IP             : $IP
+ UUID           : $uuid
+ Encryption     : none
+ Expired        : $exp_date ($days hari)
+${BLUE}--------------------------------------------------------${NC}
+ VLess WS TLS   : 443  path /vless   (SNI=$DOMAIN)
+ VLess WS NTLS  : 80   path /vless
+ VLess gRPC     : 443  serviceName vless-grpc
+${BLUE}--------------------------------------------------------${NC}
+ Link WS-TLS  :
+ $ws_tls
+
+ Link WS-NTLS :
+ $ws_ntls
+
+ Link gRPC    :
+ $grpc_tls
+${BLUE}════════════════════════════════════════════════════════${NC}
+
+EOF
+press_enter

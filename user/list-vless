@@ -1,0 +1,20 @@
+#!/bin/bash
+. /usr/local/sbin/common.sh
+header "LIST USER VLESS"
+printf " %-3s %-25s %-12s %s\n" "NO" "USERNAME" "EXPIRED" "STATUS"
+sline
+i=0; now=$(date +%s)
+jq -r '.inbounds[]|select(.tag=="vless-ws")|.settings.clients[]|"\(.email)\t\(.expiry // 0)"' "$XRAY_CONFIG" | \
+while IFS=$'\t' read -r email exp; do
+    i=$((i+1))
+    if [[ "$exp" == "0" ]]; then d="never"; st="${GREEN}active${NC}"
+    else
+        d=$(date -d "@$exp" +"%Y-%m-%d")
+        if (( exp < now )); then st="${RED}expired${NC}"
+        elif (( exp - now < 86400*3 )); then st="${YELLOW}<3d${NC}"
+        else st="${GREEN}active${NC}"; fi
+    fi
+    printf " %-3s %-25s %-12s %b\n" "$i" "$email" "$d" "$st"
+done
+sline
+press_enter

@@ -1,0 +1,16 @@
+#!/bin/bash
+. /usr/local/sbin/common.sh
+header "USER SSH ONLINE"
+printf " %-20s %-15s %-10s\n" "USERNAME" "FROM" "PROTOCOL"
+sline
+# OpenSSH (port 22) via 'who'
+who | awk '{printf " %-20s %-15s %-10s\n", $1, $5, "ssh"}' | tr -d '()'
+# Dropbear (109/143) via /var/log/auth.log if exists
+if [[ -f /var/log/auth.log ]]; then
+    grep -i "dropbear.*Password auth succeeded" /var/log/auth.log 2>/dev/null \
+      | tail -n 50 \
+      | awk '{print $0}' >/dev/null   # placeholder, real listing via ss below
+fi
+# active sessions on dropbear ports
+ss -tnp 2>/dev/null | awk '/:109|:143/ {print $0}' | head -50
+press_enter
