@@ -36,6 +36,22 @@ if ! have_pkg libnginx-mod-stream && ! nginx -V 2>&1 | grep -q -- '--with-stream
     log "libnginx-mod-stream installed"
 fi
 
+# Ensure the module is actually loadable. Some installs don't auto-create
+# /etc/nginx/modules-enabled/50-mod-stream.conf — write it ourselves if missing.
+mkdir -p /etc/nginx/modules-enabled
+if ! ls /etc/nginx/modules-enabled/*.conf 2>/dev/null | xargs grep -lE 'ngx_stream_module' >/dev/null 2>&1; then
+    STREAM_SO=$(find /usr/lib/nginx/modules /usr/share/nginx/modules \
+                     -name 'ngx_stream_module.so' 2>/dev/null | head -1)
+    if [[ -n "$STREAM_SO" ]]; then
+        echo "load_module $STREAM_SO;" > /etc/nginx/modules-enabled/50-mod-stream.conf
+        log "Manually wired stream module: $STREAM_SO"
+    else
+        fail "ngx_stream_module.so NOT FOUND on system. Install nginx-full or nginx-extras and rerun."
+        apt-cache search nginx | grep -i mod-stream | sed 's/^/    /'
+        exit 1
+    fi
+fi
+
 # stunnel package detection
 STUNNEL_PKG=stunnel4
 if ! apt-cache show stunnel4 >/dev/null 2>&1; then STUNNEL_PKG=stunnel; fi
@@ -55,6 +71,10 @@ cat > /etc/nginx/nginx.conf <<'NGINXCONF'
 user www-data;
 worker_processes auto;
 pid /run/nginx.pid;
+
+# Load dynamic modules (libnginx-mod-stream lands here on Debian/Ubuntu)
+include /etc/nginx/modules-enabled/*.conf;
+
 events { worker_connections 4096; multi_accept on; }
 
 http {

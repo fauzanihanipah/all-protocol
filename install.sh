@@ -70,6 +70,14 @@ apt-get install -y --no-install-recommends \
     sudo screen bc vnstat lsof net-tools dnsutils \
     cmake build-essential git file >/dev/null 2>&1
 
+# Make sure nginx stream module is actually loadable
+mkdir -p /etc/nginx/modules-enabled
+if ! ls /etc/nginx/modules-enabled/*.conf 2>/dev/null | xargs grep -lE 'ngx_stream_module' >/dev/null 2>&1; then
+    STREAM_SO=$(find /usr/lib/nginx/modules /usr/share/nginx/modules \
+                     -name 'ngx_stream_module.so' 2>/dev/null | head -1)
+    [[ -n "$STREAM_SO" ]] && echo "load_module $STREAM_SO;" > /etc/nginx/modules-enabled/50-mod-stream.conf
+fi
+
 # Resolve the actual systemd unit name for stunnel
 STUNNEL_SVC=stunnel4
 systemctl list-unit-files 2>/dev/null | grep -q '^stunnel4\.service' || STUNNEL_SVC=stunnel
