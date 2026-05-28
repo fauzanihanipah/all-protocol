@@ -49,13 +49,29 @@ if (( missing )); then
     cd "$REPO"
 fi
 
-# 1) Pastikan paket nginx-stream terpasang
-log "Ensure nginx-stream module..."
-if ! nginx -V 2>&1 | grep -q -- '--with-stream' && \
-   ! dpkg -l 2>/dev/null | grep -qE 'libnginx-mod-stream|nginx-full|nginx-extras'; then
-    apt-get update -y >/dev/null
-    DEBIAN_FRONTEND=noninteractive apt-get install -y libnginx-mod-stream >/dev/null
-    log "libnginx-mod-stream installed"
+# 1) Pastikan modul stream nginx tersedia & ter-load
+log "Ensure nginx stream module..."
+need_stream_pkg=1
+# Kalau nginx di-compile dengan --with-stream (statik), tidak perlu paket dinamis.
+if nginx -V 2>&1 | grep -q -- '--with-stream'; then
+    need_stream_pkg=0
+fi
+if (( need_stream_pkg )); then
+    apt-get update -y >/dev/null 2>&1 || true
+    DEBIAN_FRONTEND=noninteractive apt-get install -y libnginx-mod-stream >/dev/null 2>&1 \
+        && log "libnginx-mod-stream installed/up-to-date" \
+        || warn "Gagal pasang libnginx-mod-stream — coba 'apt-get install libnginx-mod-stream' manual"
+fi
+
+# Pastikan modul ter-enable (symlink ada di /etc/nginx/modules-enabled/)
+if [[ -d /etc/nginx/modules-available ]] && \
+   ls /etc/nginx/modules-enabled/ 2>/dev/null | grep -q 'mod-stream' ; then
+    :
+elif [[ -f /usr/share/nginx/modules-available/mod-stream.conf ]]; then
+    mkdir -p /etc/nginx/modules-enabled
+    ln -sf /usr/share/nginx/modules-available/mod-stream.conf \
+           /etc/nginx/modules-enabled/50-mod-stream.conf
+    log "Linked mod-stream into modules-enabled"
 fi
 
 # 2) Detect stunnel service name
