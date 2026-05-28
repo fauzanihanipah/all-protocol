@@ -160,7 +160,7 @@ sed -i "s|__DOMAIN__|$DOMAIN|g" /etc/nginx/conf.d/all-protocol.conf
 install -m 644 "$SRC/config/stunnel.conf"       /etc/stunnel/stunnel.conf
 sed -i 's|^ENABLED=.*|ENABLED=1|' /etc/default/stunnel4 2>/dev/null || true
 cat /etc/xray/xray.key /etc/xray/xray.crt > /etc/stunnel/stunnel.pem
-chmod 640 /etc/stunnel/stunnel.pem
+chmod 600 /etc/stunnel/stunnel.pem
 chown root:root /etc/stunnel/stunnel.pem
 
 # --- Dropbear ---
