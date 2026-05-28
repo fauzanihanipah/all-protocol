@@ -8,17 +8,27 @@ useradd -e "$expire" -s /bin/false -M "$user" >/dev/null 2>&1
 echo "$user:$pass" | chpasswd
 cat <<EOF
 
-${BLUE}════════════════════════════════════════════════════════${NC}
-              ${CYAN}AKUN TRIAL SSH (1 HARI)${NC}
-${BLUE}════════════════════════════════════════════════════════${NC}
+${BLUE}════════════════════════════════════════════════════════════════${NC}
+                  ${CYAN}AKUN TRIAL SSH (1 HARI)${NC}
+${BLUE}════════════════════════════════════════════════════════════════${NC}
  Username  : $user
  Password  : $pass
  Domain    : $DOMAIN
  IP        : $IP
  Expired   : $expire
-${BLUE}--------------------------------------------------------${NC}
+${BLUE}----------------------------------------------------------------${NC}
  OpenSSH 22 | Dropbear 109,143 | SSH-WS 80/443 | SSH-SSL 443/777
-${BLUE}════════════════════════════════════════════════════════${NC}
+${BLUE}════════════════════════════════════════════════════════════════${NC}
+                ${YELLOW}PAYLOAD SSH-WS NON-TLS  (port 80)${NC}
+${BLUE}----------------------------------------------------------------${NC}
+GET ws://$DOMAIN/ssh-ws HTTP/1.1[crlf]Host: $DOMAIN[crlf]Upgrade: websocket[crlf]Connection: Upgrade[crlf][crlf]
+${BLUE}----------------------------------------------------------------${NC}
+                ${YELLOW}PAYLOAD SSH-WS TLS      (port 443)${NC}
+${BLUE}----------------------------------------------------------------${NC}
+GET wss://$DOMAIN/ssh-ws HTTP/1.1[crlf]Host: $DOMAIN[crlf]Upgrade: websocket[crlf]Connection: Upgrade[crlf][crlf]
+${BLUE}════════════════════════════════════════════════════════════════${NC}
+ SSL: ON (443) / OFF (80)   SNI: $DOMAIN   SSH host: 127.0.0.1:22
+${BLUE}════════════════════════════════════════════════════════════════${NC}
 
 EOF
 press_enter
