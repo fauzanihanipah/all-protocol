@@ -97,7 +97,7 @@ install -m 644 config/stunnel.conf     /etc/stunnel/stunnel.conf
 [[ -s /etc/xray/xray.crt && -s /etc/xray/xray.key ]] \
     && cat /etc/xray/xray.key /etc/xray/xray.crt > /etc/stunnel/stunnel.pem \
     || warn "Cert /etc/xray/xray.* hilang - SSH-SSL tidak akan jalan!"
-chmod 644 /etc/stunnel/stunnel.pem 2>/dev/null
+chmod 600 /etc/stunnel/stunnel.pem 2>/dev/null
 chown root:root /etc/stunnel/stunnel.pem 2>/dev/null
 sed -i 's|^ENABLED=.*|ENABLED=1|' /etc/default/stunnel4 2>/dev/null || true
 
