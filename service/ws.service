@@ -1,0 +1,15 @@
+[Unit]
+Description=All-Protocol WS Proxy (SSH-WebSocket bridge)
+After=network.target ssh.service
+Requires=ssh.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/bin/ws-py
+Restart=on-failure
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
