@@ -152,6 +152,8 @@ install -m 644 "$SRC/config/xray.json"          /etc/xray/config.json
 rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf 2>/dev/null
 install -m 644 "$SRC/config/nginx.conf"         /etc/nginx/nginx.conf
 install -m 644 "$SRC/config/nginx-vhost.conf"   /etc/nginx/conf.d/all-protocol.conf
+DOMAIN_RE=$(echo "$DOMAIN" | sed 's|\.|\\.|g')
+sed -i "s|__DOMAIN__|$DOMAIN|g; s|__DOMAIN_RE__|$DOMAIN_RE|g" /etc/nginx/nginx.conf
 sed -i "s|__DOMAIN__|$DOMAIN|g" /etc/nginx/conf.d/all-protocol.conf
 
 # --- Stunnel (SSH SSL backend) ---
@@ -163,6 +165,10 @@ chown root:root /etc/stunnel/stunnel.pem
 
 # --- Dropbear ---
 install -m 644 "$SRC/config/dropbear"           /etc/default/dropbear
+
+# Pastikan /bin/false dianggap valid login shell oleh Dropbear/OpenSSH/PAM.
+grep -qx '/bin/false' /etc/shells 2>/dev/null || echo '/bin/false' >> /etc/shells
+grep -qx '/usr/sbin/nologin' /etc/shells 2>/dev/null || echo '/usr/sbin/nologin' >> /etc/shells
 
 # --- WS python proxy (jika bin ws gagal jalan, fallback python) ---
 install -m 755 "$SRC/config/ws.py"              /usr/local/bin/ws-py

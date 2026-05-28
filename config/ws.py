@@ -9,7 +9,9 @@ import socket, threading, select, sys
 LISTEN_HOST = "127.0.0.1"
 LISTEN_PORT = 8880
 TARGET_HOST = "127.0.0.1"
-TARGET_PORT = 22
+# Forward ke Dropbear, bukan OpenSSH — mobile SSH injectors umumnya
+# pakai cipher/MAC legacy yang OpenSSH modern sudah hapus.
+TARGET_PORT = 109
 
 RESPONSE = (
     b"HTTP/1.1 101 Switching Protocols\r\n"
