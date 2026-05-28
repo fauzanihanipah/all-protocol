@@ -18,20 +18,36 @@ fail() { echo -e " ${RED}[X]${NC} $*"; }
 
 REPO=/opt/all-protocol
 REPO_URL="https://github.com/fauzanihanipah/all-protocol.git"
+# Branch override: jika user pakai
+#   BRANCH=fix/foo bash <(curl ... fix-services.sh)
+# atau script di-download dari branch khusus, paksa checkout branch itu.
+BRANCH="${BRANCH:-}"
 
 # Ensure repo is at latest commit (fall back to fresh re-clone if pull fails)
 if [[ -d "$REPO/.git" ]]; then
-    log "Pulling latest into $REPO ..."
-    if ! git -C "$REPO" pull --ff-only 2>&1 | sed 's/^/    /'; then
-        warn "git pull failed, doing fresh re-clone..."
-        rm -rf "$REPO"
-        git clone --depth 1 "$REPO_URL" "$REPO"
+    log "Fetching latest into $REPO ..."
+    git -C "$REPO" fetch --all --prune 2>&1 | sed 's/^/    /' || true
+    if [[ -n "$BRANCH" ]]; then
+        log "Force-checkout branch '$BRANCH'..."
+        git -C "$REPO" checkout -B "$BRANCH" "origin/$BRANCH" 2>&1 | sed 's/^/    /' \
+            || { warn "checkout $BRANCH gagal, re-clone..."; rm -rf "$REPO"; git clone --depth 1 -b "$BRANCH" "$REPO_URL" "$REPO"; }
+    else
+        if ! git -C "$REPO" pull --ff-only 2>&1 | sed 's/^/    /'; then
+            warn "git pull failed, doing fresh re-clone..."
+            rm -rf "$REPO"
+            git clone --depth 1 "$REPO_URL" "$REPO"
+        fi
     fi
 else
     log "Cloning $REPO ..."
-    git clone --depth 1 "$REPO_URL" "$REPO"
+    if [[ -n "$BRANCH" ]]; then
+        git clone --depth 1 -b "$BRANCH" "$REPO_URL" "$REPO"
+    else
+        git clone --depth 1 "$REPO_URL" "$REPO"
+    fi
 fi
 cd "$REPO"
+log "Repo HEAD: $(git -C "$REPO" rev-parse --short HEAD) on $(git -C "$REPO" rev-parse --abbrev-ref HEAD)"
 
 # Verify required files exist; if any missing, force re-clone
 need_files=(config/nginx.conf config/nginx-vhost.conf config/stunnel.conf
