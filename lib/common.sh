@@ -10,6 +10,10 @@ DOMAIN="$(cat /etc/xray/domain 2>/dev/null)"
 IP="$(cat /etc/all-protocol.conf 2>/dev/null | awk -F= '/^IP=/{print $2}')"
 [[ -z "$IP" ]] && IP="$(curl -s ifconfig.me)"
 
+# Detect stunnel systemd unit name (Debian uses stunnel4, newer uses stunnel)
+STUNNEL_SVC=stunnel4
+systemctl list-unit-files 2>/dev/null | grep -q '^stunnel4\.service' || STUNNEL_SVC=stunnel
+
 # ---------- UI helpers ----------
 line()       { echo -e "${BLUE}================================================================${NC}"; }
 sline()      { echo -e "${BLUE}----------------------------------------------------------------${NC}"; }

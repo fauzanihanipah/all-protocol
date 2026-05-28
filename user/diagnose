@@ -1,0 +1,43 @@
+#!/bin/bash
+. /usr/local/sbin/common.sh
+header "DIAGNOSE  -  cek penyebab service OFF"
+
+check_svc() {
+    local svc="$1"
+    sline
+    echo -e "${CYAN}>>> $svc${NC}"
+    if systemctl is-active --quiet "$svc"; then
+        ok "$svc running"
+    else
+        fail "$svc NOT running"
+        echo " --- last 15 log lines ---"
+        journalctl -u "$svc" -n 15 --no-pager 2>/dev/null \
+            || systemctl status "$svc" --no-pager -n 15
+    fi
+}
+
+check_svc nginx
+nginx -t 2>&1 | head -10
+check_svc "$STUNNEL_SVC"
+[[ ! -f /etc/stunnel/stunnel.pem ]] && fail "/etc/stunnel/stunnel.pem MISSING"
+ls -l /etc/stunnel/stunnel.pem 2>/dev/null
+check_svc ws
+echo "  binary : $(file /usr/local/bin/ws 2>/dev/null | head -1)"
+echo "  ws-py  : $(ls -l /usr/local/bin/ws-py 2>/dev/null)"
+check_svc runn
+echo "  badvpn : $(file /usr/local/bin/badvpn-udpgw 2>/dev/null | head -1)"
+
+sline; echo -e "${CYAN}>>> Port listening${NC}"
+ss -tlnp 2>/dev/null | awk '/:80 |:443 |:109 |:143 |:777 |:7100 |:7300 |:8443 |:8880/ {print "  "$0}'
+sline; echo -e "${CYAN}>>> nginx stream module${NC}"
+if nginx -V 2>&1 | grep -q -- '--with-stream'; then ok "stream baked-in"
+elif dpkg -l 2>/dev/null | grep -qE 'libnginx-mod-stream|nginx-full|nginx-extras'; then
+    ok "stream module package installed"
+else
+    fail "nginx tanpa stream module - install libnginx-mod-stream"
+fi
+sline; echo -e "${CYAN}>>> Cert files${NC}"
+for f in /etc/xray/xray.crt /etc/xray/xray.key /etc/stunnel/stunnel.pem; do
+    if [[ -s "$f" ]]; then ok "$f"; else fail "$f kosong/tidak ada"; fi
+done
+press_enter

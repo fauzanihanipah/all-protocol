@@ -58,13 +58,22 @@ echo "$DOMAIN" > /root/domain
 print_title "1/7 INSTALL DEPENDENCIES"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y >/dev/null 2>&1
+# Detect which stunnel package is available (Debian: stunnel4, newer: stunnel)
+STUNNEL_PKG=stunnel4
+apt-cache show stunnel4 >/dev/null 2>&1 || STUNNEL_PKG=stunnel
+
 apt-get install -y --no-install-recommends \
     curl wget unzip jq qrencode socat netcat-openbsd cron iptables \
-    nginx stunnel4 dropbear openssh-server \
+    nginx libnginx-mod-stream \
+    $STUNNEL_PKG dropbear openssh-server \
     python3 python3-pip uuid-runtime \
     sudo screen bc vnstat lsof net-tools dnsutils \
-    cmake build-essential git >/dev/null 2>&1
-print_ok "Dependencies terinstall."
+    cmake build-essential git file >/dev/null 2>&1
+
+# Resolve the actual systemd unit name for stunnel
+STUNNEL_SVC=stunnel4
+systemctl list-unit-files 2>/dev/null | grep -q '^stunnel4\.service' || STUNNEL_SVC=stunnel
+print_ok "Dependencies terinstall (stunnel pkg=$STUNNEL_PKG, svc=$STUNNEL_SVC)."
 
 # =====================================================================
 # 2. DOWNLOAD BINARIES
@@ -87,14 +96,24 @@ print_ok "Xray terinstall: $(/usr/local/bin/xray version | head -n1)"
 print_info "Mengunduh badvpn-udpgw..."
 wget -q "$UDPGW_URL" -O /usr/local/bin/badvpn-udpgw
 chmod +x /usr/local/bin/badvpn-udpgw
-print_ok "UDPGW terinstall."
+# Wrapper that runs both 7100 + 7300 in one foreground process group
+cat > /usr/local/bin/run-udpgw <<'WRAP'
+#!/bin/sh
+trap 'kill 0' EXIT TERM INT
+/usr/local/bin/badvpn-udpgw --listen-addr 127.0.0.1:7100 --max-clients 500 --max-connections-for-client 10 &
+/usr/local/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 500 --max-connections-for-client 10 &
+wait
+WRAP
+chmod +x /usr/local/bin/run-udpgw
+print_ok "UDPGW terinstall (wrapper /usr/local/bin/run-udpgw)."
 
 # --- WebSocket Proxy (untuk SSH-WS) ---
-print_info "Mengunduh ws (SSH-WS proxy)..."
-wget -q "$WS_URL" -O /usr/local/bin/ws
-chmod +x /usr/local/bin/ws
-wget -q "$WS_SERVICE_URL" -O /etc/systemd/system/ws.service
-print_ok "WS proxy terinstall."
+# Kita TIDAK pakai ws.service dari URL eksternal (tidak terkontrol).
+# Gunakan ws.py kita sendiri, lebih reliable.
+print_info "Mengunduh ws binary (cadangan, tidak dipakai default)..."
+wget -q "$WS_URL" -O /usr/local/bin/ws 2>/dev/null
+chmod +x /usr/local/bin/ws 2>/dev/null
+print_ok "WS proxy disiapkan (pakai ws-py Python untuk reliability)."
 
 # =====================================================================
 # 3. SSL CERTIFICATE (acme.sh)
@@ -139,7 +158,8 @@ sed -i "s|__DOMAIN__|$DOMAIN|g" /etc/nginx/conf.d/all-protocol.conf
 install -m 644 "$SRC/config/stunnel.conf"       /etc/stunnel/stunnel.conf
 sed -i 's|^ENABLED=.*|ENABLED=1|' /etc/default/stunnel4 2>/dev/null || true
 cat /etc/xray/xray.key /etc/xray/xray.crt > /etc/stunnel/stunnel.pem
-chmod 600 /etc/stunnel/stunnel.pem
+chmod 640 /etc/stunnel/stunnel.pem
+chown root:root /etc/stunnel/stunnel.pem
 
 # --- Dropbear ---
 install -m 644 "$SRC/config/dropbear"           /etc/default/dropbear
@@ -150,6 +170,7 @@ install -m 755 "$SRC/config/ws.py"              /usr/local/bin/ws-py
 # --- Service files ---
 install -m 644 "$SRC/service/runn.service"      /etc/systemd/system/runn.service
 install -m 644 "$SRC/service/xray.service"      /etc/systemd/system/xray.service
+install -m 644 "$SRC/service/ws.service"        /etc/systemd/system/ws.service
 
 print_ok "Konfigurasi ter-deploy."
 
@@ -186,15 +207,35 @@ if command -v ufw >/dev/null && ufw status | grep -q active; then
 fi
 
 systemctl daemon-reload
-systemctl enable --now nginx           >/dev/null 2>&1
-systemctl enable --now dropbear        >/dev/null 2>&1
-systemctl enable --now stunnel4        >/dev/null 2>&1
-systemctl enable --now xray            >/dev/null 2>&1
-systemctl enable --now ws              >/dev/null 2>&1
-systemctl enable --now runn            >/dev/null 2>&1
+
+# Test nginx config first; abort start if invalid
+if ! nginx -t >/dev/null 2>&1; then
+    print_warn "nginx -t FAILED, mencoba auto-fix:"
+    nginx -t 2>&1 | sed 's/^/    /'
+fi
+
+start_and_check() {
+    local svc="$1"
+    systemctl enable "$svc" >/dev/null 2>&1
+    systemctl restart "$svc" >/dev/null 2>&1
+    sleep 1
+    if systemctl is-active --quiet "$svc"; then
+        print_ok "$svc started"
+    else
+        print_err "$svc FAILED:"
+        journalctl -u "$svc" -n 8 --no-pager 2>/dev/null | sed 's/^/    /'
+    fi
+}
+
+start_and_check nginx
+start_and_check dropbear
+start_and_check "$STUNNEL_SVC"
+start_and_check xray
+start_and_check ws
+start_and_check runn
 systemctl restart ssh                  >/dev/null 2>&1
 
-print_ok "Services running."
+print_ok "Service start sequence selesai."
 
 # =====================================================================
 # 7. CRON & FINAL TOUCHES

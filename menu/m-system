@@ -14,17 +14,18 @@ echo -e "  ${GREEN}8${NC}) Tampilkan info port"
 echo -e "  ${GREEN}9${NC}) Toggle BBR  (status: $(bbr_status))"
 echo -e "  ${GREEN}10${NC}) Toggle IPv6 (status: $(ipv6_status))"
 echo -e "  ${GREEN}11${NC}) Update Script"
+echo -e "  ${GREEN}12${NC}) Diagnose service OFF"
 echo -e "  ${RED}0${NC}) Kembali"
 sline
 read -rp " Pilih menu: " opt
 case $opt in
   1)
-     for s in ssh dropbear nginx xray stunnel4 ws runn ; do
+     for s in ssh dropbear nginx xray "$STUNNEL_SVC" ws runn ; do
         printf "  %-12s : " "$s"
         systemctl is-active --quiet $s && echo -e "${GREEN}running${NC}" || echo -e "${RED}stopped${NC}"
      done
      press_enter ;;
-  2) systemctl restart ssh dropbear nginx xray stunnel4 ws runn 2>/dev/null
+  2) systemctl restart ssh dropbear nginx xray "$STUNNEL_SVC" ws runn 2>/dev/null
      ok "All services restarted." ; press_enter ;;
   3) read -rp " Yakin reboot VPS? (y/N): " a; [[ $a =~ ^[Yy]$ ]] && reboot ;;
   4) vnstat || warn "vnstat belum punya data, tunggu beberapa menit."; press_enter ;;
@@ -43,7 +44,7 @@ case $opt in
               --fullchain-file /etc/xray/xray.crt \
               --key-file /etc/xray/xray.key \
         && cat /etc/xray/xray.key /etc/xray/xray.crt > /etc/stunnel/stunnel.pem \
-        && systemctl restart nginx xray stunnel4
+        && systemctl restart nginx xray "$STUNNEL_SVC"
      ok "Renew selesai." ; press_enter ;;
   8) cat <<EOM
   Domain         : $DOMAIN
@@ -67,6 +68,7 @@ EOM
   9)  toggle-bbr   ;;
   10) toggle-ipv6  ;;
   11) update-script;;
+  12) diagnose ;;
   0) menu ;;
   *) fail "Pilihan tidak valid"; sleep 1 ;;
 esac

@@ -4,11 +4,10 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStartPre=/bin/sh -c '/usr/bin/pkill -f "badvpn-udpgw --listen-addr 127.0.0.1:7100" || true'
-ExecStart=/usr/local/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 500 --max-connections-for-client 10
-ExecStartPost=/bin/sh -c '/usr/local/bin/badvpn-udpgw --listen-addr 127.0.0.1:7100 --max-clients 500 --max-connections-for-client 10 &'
+ExecStart=/usr/local/bin/run-udpgw
 Restart=on-failure
 RestartSec=3
+KillMode=control-group
 
 [Install]
 WantedBy=multi-user.target

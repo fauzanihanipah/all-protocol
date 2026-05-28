@@ -16,7 +16,7 @@ ipv6=$(ipv6_status)
 # -- service status --
 s_ssh=$(svc_status ssh);          s_dropb=$(svc_status dropbear)
 s_ngx=$(svc_status nginx);        s_xray=$(svc_status xray)
-s_stun=$(svc_status stunnel4);    s_ws=$(svc_status ws)
+s_stun=$(svc_status "$STUNNEL_SVC");    s_ws=$(svc_status ws)
 s_udp=$(svc_status runn)
 
 # -- active users --
@@ -38,7 +38,7 @@ row2 " ${WHITE}IP        ${NC}: ${ip_local}"        " ${WHITE}ssh        ${NC}: 
 row2 " ${WHITE}Domain    ${NC}: ${domain}"          " ${WHITE}dropbear   ${NC}: ${s_dropb}"
 row2 " ${WHITE}Uptime    ${NC}: ${uptime_str}"      " ${WHITE}nginx      ${NC}: ${s_ngx}"
 row2 " ${WHITE}Memory    ${NC}: ${ram_used}"        " ${WHITE}xray       ${NC}: ${s_xray}"
-row2 " ${WHITE}Load Avg  ${NC}: ${load_avg}"        " ${WHITE}stunnel4   ${NC}: ${s_stun}"
+row2 " ${WHITE}Load Avg  ${NC}: ${load_avg}"        " ${WHITE}stunnel    ${NC}: ${s_stun}"
 row2 " ${WHITE}Date      ${NC}: ${date_now}"        " ${WHITE}ws         ${NC}: ${s_ws}"
 row2 " ${WHITE}BBR       ${NC}: ${bbr}"             " ${WHITE}udpgw      ${NC}: ${s_udp}"
 row2 " ${WHITE}IPv6      ${NC}: ${ipv6}"            ""
@@ -63,7 +63,7 @@ case $opt in
   3) m-vless  ;;
   4) m-trojan ;;
   5) m-system ;;
-  6) systemctl restart ssh dropbear nginx xray stunnel4 ws runn 2>/dev/null
+  6) systemctl restart ssh dropbear nginx xray "$STUNNEL_SVC" ws runn 2>/dev/null
      ok "Semua service di-restart."; press_enter ; menu ;;
   7) toggle-bbr   ; menu ;;
   8) toggle-ipv6  ; menu ;;

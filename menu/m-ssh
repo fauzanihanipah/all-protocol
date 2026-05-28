@@ -24,7 +24,7 @@ case $opt in
   6) renew-ssh   ;;
   7) del-expired ; ok "Selesai." ; press_enter ;;
   8) payload-ssh ;;
-  9) systemctl restart ssh dropbear stunnel4 ws ; ok "Restarted." ; press_enter ;;
+  9) systemctl restart ssh dropbear "$STUNNEL_SVC" ws ; ok "Restarted." ; press_enter ;;
   0) menu ;;
   *) fail "Pilihan tidak valid"; sleep 1 ;;
 esac
