@@ -46,10 +46,10 @@ test_ssl_port() {
     local label="$1" host="$2" port="$3" sni_args="$4"
     local out
     out=$(timeout 5 bash -c "echo | openssl s_client -connect $host:$port $sni_args 2>/dev/null | head -c 200" || true)
-    if echo "$out" | grep -q '^SSH-2\.0-'; then
+    if echo "$out" | grep -qE '^SSH-2\.0-(dropbear|OpenSSH)'; then
         ok "$label ($host:$port) -> $(echo "$out" | head -1)"
     elif echo "$out" | grep -q 'TLSv1'; then
-        warn "$label ($host:$port) -> TLS handshake OK tapi bukan SSH (mungkin nge-hit nginx HTTPS, bukan stunnel)"
+        warn "$label ($host:$port) -> TLS handshake OK tapi bukan SSH (kemungkinan nge-hit nginx HTTPS, bukan stunnel)"
     else
         fail "$label ($host:$port) tidak terhubung / no TLS"
     fi

@@ -113,6 +113,11 @@ install -m 644 service/ws.service      /etc/systemd/system/ws.service
 install -m 644 service/runn.service    /etc/systemd/system/runn.service
 install -m 644 service/xray.service    /etc/systemd/system/xray.service
 
+# Pastikan /bin/false ter-listed di /etc/shells supaya useradd -s /bin/false
+# tidak ditolak Dropbear/OpenSSH saat login (PAM check_shells).
+grep -qx '/bin/false' /etc/shells 2>/dev/null || echo '/bin/false' >> /etc/shells
+grep -qx '/usr/sbin/nologin' /etc/shells 2>/dev/null || echo '/usr/sbin/nologin' >> /etc/shells
+
 # udpgw wrapper
 cat > /usr/local/bin/run-udpgw <<'WRAP'
 #!/bin/sh

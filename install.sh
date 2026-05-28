@@ -166,6 +166,10 @@ chown root:root /etc/stunnel/stunnel.pem
 # --- Dropbear ---
 install -m 644 "$SRC/config/dropbear"           /etc/default/dropbear
 
+# Pastikan /bin/false dianggap valid login shell oleh Dropbear/OpenSSH/PAM.
+grep -qx '/bin/false' /etc/shells 2>/dev/null || echo '/bin/false' >> /etc/shells
+grep -qx '/usr/sbin/nologin' /etc/shells 2>/dev/null || echo '/usr/sbin/nologin' >> /etc/shells
+
 # --- WS python proxy (jika bin ws gagal jalan, fallback python) ---
 install -m 755 "$SRC/config/ws.py"              /usr/local/bin/ws-py
 
