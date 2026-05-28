@@ -1,0 +1,44 @@
+#!/bin/bash
+. /usr/local/sbin/common.sh
+header "TOGGLE IPv6"
+
+cur=$(sysctl -n net.ipv6.conf.all.disable_ipv6 2>/dev/null)
+[[ "$cur" == "1" ]] && state="${RED}DISABLED${NC}" || state="${GREEN}ENABLED${NC}"
+echo -e "  Status sekarang : IPv6 = $state"
+sline
+echo -e "  ${GREEN}1${NC}) Disable IPv6  (matikan all/default/lo, persistent)"
+echo -e "  ${GREEN}2${NC}) Enable  IPv6  (aktifkan kembali)"
+echo -e "  ${RED}0${NC}) Batal"
+sline
+read -rp " Pilih: " a
+case $a in
+  1)
+    cat > /etc/sysctl.d/99-disable-ipv6.conf <<EOF
+# managed by all-protocol toggle-ipv6
+net.ipv6.conf.all.disable_ipv6 = 1
+net.ipv6.conf.default.disable_ipv6 = 1
+net.ipv6.conf.lo.disable_ipv6 = 1
+EOF
+    sysctl --system >/dev/null 2>&1
+    # bake into grub for persistence across kernel changes (best-effort)
+    if [[ -f /etc/default/grub ]] && ! grep -q 'ipv6.disable=1' /etc/default/grub; then
+        sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="\(.*\)"/GRUB_CMDLINE_LINUX_DEFAULT="\1 ipv6.disable=1"/' /etc/default/grub
+        update-grub >/dev/null 2>&1 || true
+    fi
+    ok "IPv6 di-DISABLE."
+    ;;
+  2)
+    rm -f /etc/sysctl.d/99-disable-ipv6.conf
+    sysctl -w net.ipv6.conf.all.disable_ipv6=0     >/dev/null
+    sysctl -w net.ipv6.conf.default.disable_ipv6=0 >/dev/null
+    sysctl -w net.ipv6.conf.lo.disable_ipv6=0      >/dev/null
+    if [[ -f /etc/default/grub ]] && grep -q 'ipv6.disable=1' /etc/default/grub; then
+        sed -i 's/ ipv6.disable=1//' /etc/default/grub
+        update-grub >/dev/null 2>&1 || true
+    fi
+    ok "IPv6 di-ENABLE kembali."
+    ;;
+  0|"") warn "Batal." ;;
+  *) fail "Pilihan tidak valid." ;;
+esac
+press_enter

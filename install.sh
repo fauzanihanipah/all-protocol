@@ -63,7 +63,7 @@ apt-get install -y --no-install-recommends \
     nginx stunnel4 dropbear openssh-server \
     python3 python3-pip uuid-runtime \
     sudo screen bc vnstat lsof net-tools dnsutils \
-    cmake build-essential >/dev/null 2>&1
+    cmake build-essential git >/dev/null 2>&1
 print_ok "Dependencies terinstall."
 
 # =====================================================================
@@ -205,6 +205,21 @@ print_title "7/7 CRON & FINISH"
 ( crontab -l 2>/dev/null | grep -v 'all-protocol' ; \
   echo "*/1 * * * * /usr/local/sbin/del-expired >/dev/null 2>&1 # all-protocol" \
 ) | crontab -
+
+# enable BBR by default (best-effort)
+modprobe tcp_bbr 2>/dev/null
+echo "tcp_bbr" > /etc/modules-load.d/tcp_bbr.conf
+cat > /etc/sysctl.d/99-bbr.conf <<EOF
+net.core.default_qdisc=fq
+net.ipv4.tcp_congestion_control=bbr
+EOF
+sysctl --system >/dev/null 2>&1
+
+# clone repo to /opt/all-protocol so menu->Update Script can git-pull
+if [[ ! -d /opt/all-protocol/.git ]]; then
+    rm -rf /opt/all-protocol
+    git clone --depth 1 https://github.com/fauzanihanipah/all-protocol.git /opt/all-protocol >/dev/null 2>&1 || true
+fi
 
 # banner
 cat > /etc/issue.net <<EOF

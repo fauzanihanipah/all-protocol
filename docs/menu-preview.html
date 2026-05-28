@@ -17,15 +17,12 @@
   h2{font-size:15px;color:var(--cyan);margin:28px 0 8px;text-transform:uppercase;
      letter-spacing:1px;font-weight:600}
   .term{
-    background:var(--bg);
-    color:var(--fg);
+    background:var(--bg); color:var(--fg);
     border-radius:10px;
     box-shadow:0 8px 28px rgba(0,0,0,.55), inset 0 0 0 1px #2b303b;
-    overflow:hidden;
-    margin-bottom:20px;
+    overflow:hidden; margin-bottom:20px;
     font-family:'JetBrains Mono','Fira Code','Cascadia Code',Menlo,Consolas,monospace;
-    font-size:13.5px;
-    line-height:1.45;
+    font-size:13.5px; line-height:1.5;
   }
   .bar{background:#22262e;padding:8px 14px;display:flex;gap:6px;align-items:center;
        border-bottom:1px solid #2b303b}
@@ -47,167 +44,82 @@
 </head>
 <body>
 <h1>All-Protocol Tunnel — Menu Preview</h1>
-<p class="lead">Render warna asli dari menu yang akan tampil di terminal VPS.</p>
+<p class="lead">Render warna asli dari menu yang akan tampil di terminal VPS (layout 2-kolom).</p>
 
-<h2>1. Menu Utama (<code>menu</code>)</h2>
+<h2>1. Menu Utama (<code>menu</code>) — 2 Kolom</h2>
 <div class="term">
   <div class="bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
        <div class="ttl">root@vps:~#&nbsp;menu</div></div>
-<pre><span class="b">╔══════════════════════════════════════════════════════════════╗</span>
-<span class="b">║</span><span class="c bold">            ALL-PROTOCOL TUNNEL  -  CONTROL PANEL             </span><span class="b">║</span>
-<span class="b">╠══════════════════════════════════════════════════════════════╣</span>
-<span class="b">║</span> <span class="w">IP        </span>: 103.94.190.215                                   <span class="b">║</span>
-<span class="b">║</span> <span class="w">Domain    </span>: tunnel.fauzan.dev                                <span class="b">║</span>
-<span class="b">║</span> <span class="w">Uptime    </span>: 3 days, 14 hours, 22 minutes                     <span class="b">║</span>
-<span class="b">║</span> <span class="w">Load Avg  </span>: 0.08, 0.12, 0.15                                 <span class="b">║</span>
-<span class="b">║</span> <span class="w">Memory    </span>: 412M / 2048M                                     <span class="b">║</span>
-<span class="b">║</span> <span class="w">Date      </span>: 2026-05-28 17:03:21                              <span class="b">║</span>
-<span class="b">╠══════════════════════════════════════════════════════════════╣</span>
-<span class="b">║</span> Service : ssh <span class="g">ON </span>  dropbear <span class="g">ON </span>  nginx <span class="g">ON </span>  xray <span class="g">ON </span>     <span class="b">║</span>
-<span class="b">║</span>           stunnel4 <span class="g">ON </span>  ws <span class="g">ON </span>  udpgw <span class="g">ON </span>                <span class="b">║</span>
-<span class="b">╠══════════════════════════════════════════════════════════════╣</span>
-<span class="b">║</span> Active users : <span class="y">SSH=4    VMess=7    VLess=3    Trojan=2 </span>      <span class="b">║</span>
-<span class="b">╠══════════════════════════════════════════════════════════════╣</span>
-<span class="b">║</span>  <span class="g">1</span>) Menu SSH / SSH-WS / SSH-SSL                              <span class="b">║</span>
-<span class="b">║</span>  <span class="g">2</span>) Menu V2Ray VMess                                         <span class="b">║</span>
-<span class="b">║</span>  <span class="g">3</span>) Menu V2Ray VLess                                         <span class="b">║</span>
-<span class="b">║</span>  <span class="g">4</span>) Menu Trojan                                              <span class="b">║</span>
-<span class="b">║</span>  <span class="g">5</span>) Menu System                                              <span class="b">║</span>
-<span class="b">║</span>  <span class="g">6</span>) Restart All Services                                     <span class="b">║</span>
-<span class="b">║</span>  <span class="r">0</span>) Exit                                                     <span class="b">║</span>
-<span class="b">╚══════════════════════════════════════════════════════════════╝</span>
- Pilih menu: <span class="bold">_</span></pre>
+<pre><span class="b">╔══════════════════════════════════════════════════════════════════╗</span>
+<span class="b">║</span>                                                                  <span class="b">║</span>
+<span class="b">║</span>            <span class="c bold">ALL-PROTOCOL TUNNEL  --  CONTROL PANEL</span>                <span class="b">║</span>
+<span class="b">║</span>                                                                  <span class="b">║</span>
+<span class="b">╠══════════════════════════════════════════════════════════════════╣</span>
+<span class="b">║</span> <span class="w">IP        </span>: 103.94.190.215      <span class="b">│</span> <span class="w">ssh        </span>: <span class="g">ON</span>               <span class="b">║</span>
+<span class="b">║</span> <span class="w">Domain    </span>: tunnel.fauzan.dev   <span class="b">│</span> <span class="w">dropbear   </span>: <span class="g">ON</span>               <span class="b">║</span>
+<span class="b">║</span> <span class="w">Uptime    </span>: 3 days, 14h 22m     <span class="b">│</span> <span class="w">nginx      </span>: <span class="g">ON</span>               <span class="b">║</span>
+<span class="b">║</span> <span class="w">Memory    </span>: 412M / 2048M        <span class="b">│</span> <span class="w">xray       </span>: <span class="g">ON</span>               <span class="b">║</span>
+<span class="b">║</span> <span class="w">Load Avg  </span>: 0.08, 0.12, 0.15    <span class="b">│</span> <span class="w">stunnel4   </span>: <span class="g">ON</span>               <span class="b">║</span>
+<span class="b">║</span> <span class="w">Date      </span>: 2026-05-28 17:03    <span class="b">│</span> <span class="w">ws         </span>: <span class="g">ON</span>               <span class="b">║</span>
+<span class="b">║</span> <span class="w">BBR       </span>: <span class="g">ENABLED</span>             <span class="b">│</span> <span class="w">udpgw      </span>: <span class="g">ON</span>               <span class="b">║</span>
+<span class="b">║</span> <span class="w">IPv6      </span>: <span class="r">DISABLED</span>            <span class="b">│</span>                                <span class="b">║</span>
+<span class="b">╠══════════════════════════════════════════════════════════════════╣</span>
+<span class="b">║</span> <span class="w">Active Users</span>  :  <span class="y">SSH=4   VMess=7   VLess=3   Trojan=2</span>           <span class="b">║</span>
+<span class="b">╠══════════════════════════════════════════════════════════════════╣</span>
+<span class="b">║</span>   <span class="g">1</span>) Menu SSH / SSH-WS / SSL  <span class="b">│</span>  <span class="g">6</span>) Restart All Services       <span class="b">║</span>
+<span class="b">║</span>   <span class="g">2</span>) Menu V2Ray VMess         <span class="b">│</span>  <span class="g">7</span>) Toggle BBR                 <span class="b">║</span>
+<span class="b">║</span>   <span class="g">3</span>) Menu V2Ray VLess         <span class="b">│</span>  <span class="g">8</span>) Toggle IPv6                <span class="b">║</span>
+<span class="b">║</span>   <span class="g">4</span>) Menu Trojan              <span class="b">│</span>  <span class="g">9</span>) Update Script              <span class="b">║</span>
+<span class="b">║</span>   <span class="g">5</span>) Menu System              <span class="b">│</span>  <span class="r">0</span>) Exit                       <span class="b">║</span>
+<span class="b">╚══════════════════════════════════════════════════════════════════╝</span>
+                       Pilih menu : <span class="bold">_</span></pre>
 </div>
 
 <div class="row">
   <div>
-    <h2>2. Submenu SSH</h2>
+    <h2>2. Toggle BBR</h2>
     <div class="term">
       <div class="bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
-           <div class="ttl">m-ssh</div></div>
+           <div class="ttl">toggle-bbr</div></div>
 <pre><span class="b">================================================================</span>
-<span class="c bold">                MENU  SSH / SSH-WS / SSH-SSL</span>
+<span class="c bold">                       TOGGLE TCP BBR</span>
 <span class="b">================================================================</span>
-  <span class="g">1</span>) Tambah User SSH
-  <span class="g">2</span>) Hapus User SSH
-  <span class="g">3</span>) Cek User Login (online)
-  <span class="g">4</span>) List User SSH + masa aktif
-  <span class="g">5</span>) Buat User Trial (1 hari)
-  <span class="g">6</span>) Perpanjang masa aktif user
-  <span class="g">7</span>) Hapus user expired (manual)
-  <span class="g">8</span>) Restart SSH services
-  <span class="r">0</span>) Kembali
+  Status sekarang : congestion = <span class="y">cubic</span>   qdisc = <span class="y">fq_codel</span>
 <span class="b">----------------------------------------------------------------</span>
- Pilih menu: <span class="bold">_</span></pre>
+  <span class="g">1</span>) Enable  BBR    (set fq + bbr, persistent)
+  <span class="g">2</span>) Disable BBR    (kembali ke cubic + fq_codel)
+  <span class="r">0</span>) Batal
+<span class="b">----------------------------------------------------------------</span>
+ Pilih: <span class="g">1</span>
+ <span class="g">[OK]</span> BBR berhasil di-ENABLE.  current = bbr
+
+ Tekan [Enter] untuk kembali...<span class="bold">_</span></pre>
     </div>
   </div>
 
   <div>
-    <h2>3. Submenu VMess</h2>
+    <h2>3. Toggle IPv6</h2>
     <div class="term">
       <div class="bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
-           <div class="ttl">m-vmess</div></div>
+           <div class="ttl">toggle-ipv6</div></div>
 <pre><span class="b">================================================================</span>
-<span class="c bold">                  MENU  V2RAY VMESS</span>
+<span class="c bold">                       TOGGLE IPv6</span>
 <span class="b">================================================================</span>
-  <span class="g">1</span>) Tambah Akun VMess
-  <span class="g">2</span>) Hapus Akun VMess
-  <span class="g">3</span>) List Akun VMess
-  <span class="g">4</span>) Akun Trial VMess (1 hari)
-  <span class="g">5</span>) Perpanjang masa aktif
-  <span class="g">6</span>) Restart Xray
-  <span class="r">0</span>) Kembali
+  Status sekarang : IPv6 = <span class="g">ENABLED</span>
 <span class="b">----------------------------------------------------------------</span>
- Pilih menu: <span class="bold">_</span></pre>
+  <span class="g">1</span>) Disable IPv6  (matikan all/default/lo, persistent)
+  <span class="g">2</span>) Enable  IPv6  (aktifkan kembali)
+  <span class="r">0</span>) Batal
+<span class="b">----------------------------------------------------------------</span>
+ Pilih: <span class="g">1</span>
+ <span class="g">[OK]</span> IPv6 di-DISABLE.
+
+ Tekan [Enter] untuk kembali...<span class="bold">_</span></pre>
     </div>
   </div>
 </div>
 
-<h2>4. Output Add SSH User</h2>
-<div class="term">
-  <div class="bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
-       <div class="ttl">add-ssh</div></div>
-<pre><span class="b">================================================================</span>
-<span class="c bold">                       ADD SSH USER</span>
-<span class="b">================================================================</span>
- Username       : budi
- Password       : Xz9k2Lpq
- Masa aktif (hari): 30
-
-<span class="b">════════════════════════════════════════════════════════</span>
-            <span class="c bold">AKUN SSH BERHASIL DIBUAT</span>
-<span class="b">════════════════════════════════════════════════════════</span>
- Username       : budi
- Password       : Xz9k2Lpq
- Domain         : tunnel.fauzan.dev
- IP             : 103.94.190.215
- Expired        : 2026-06-27 (30 hari)
-<span class="b">--------------------------------------------------------</span>
- Port OpenSSH   : 22
- Port Dropbear  : 109, 143
- SSH-WS NTLS    : 80      path /ssh-ws
- SSH-WS TLS     : 443     path /ssh-ws (SNI=tunnel.fauzan.dev)
- SSH-SSL        : 443 (default fallback) atau 777
- UDPGW          : 7100, 7300
-<span class="b">════════════════════════════════════════════════════════</span>
-
-  HTTP Custom Payload sample:
-    GET wss://tunnel.fauzan.dev/ssh-ws HTTP/1.1[crlf]Host: tunnel.fauzan.dev[crlf]Upgrade: websocket[crlf][crlf]
-
- Tekan [Enter] untuk kembali...<span class="bold">_</span></pre>
-</div>
-
-<h2>5. Output Add VMess User</h2>
-<div class="term">
-  <div class="bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
-       <div class="ttl">add-vmess</div></div>
-<pre><span class="b">════════════════════════════════════════════════════════</span>
-            <span class="c bold">AKUN V2RAY VMESS BERHASIL DIBUAT</span>
-<span class="b">════════════════════════════════════════════════════════</span>
- Username       : andi
- Domain         : tunnel.fauzan.dev
- IP             : 103.94.190.215
- UUID           : a1b2c3d4-5e6f-7890-abcd-ef1234567890
- alterId        : 0
- Expired        : 2026-06-27 (30 hari)
-<span class="b">--------------------------------------------------------</span>
- VMess WS TLS   : 443  path /vmess   (SNI=tunnel.fauzan.dev)
- VMess WS NTLS  : 80   path /vmess
- VMess gRPC     : 443  serviceName vmess-grpc
-<span class="b">--------------------------------------------------------</span>
- Link WS-TLS  :
- <span class="gr">vmess://eyJ2IjoiMiIsInBzIjoidm1lc3Mtd3MtdGxzIiwiYWRkIjoi...</span>
-
- Link WS-NTLS :
- <span class="gr">vmess://eyJ2IjoiMiIsInBzIjoidm1lc3Mtd3MtbnRscyIsImFkZCI6...</span>
-
- Link gRPC    :
- <span class="gr">vmess://eyJ2IjoiMiIsInBzIjoidm1lc3MtZ3JwYyIsImFkZCI6InR1...</span>
-<span class="b">════════════════════════════════════════════════════════</span></pre>
-</div>
-
-<h2>6. Output List VMess (warna status)</h2>
-<div class="term">
-  <div class="bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
-       <div class="ttl">list-vmess</div></div>
-<pre><span class="b">================================================================</span>
-<span class="c bold">                       LIST USER VMESS</span>
-<span class="b">================================================================</span>
- NO  USERNAME                   EXPIRED      STATUS
-<span class="b">----------------------------------------------------------------</span>
- 1   andi                       2026-06-15   <span class="g">active</span>
- 2   budi                       2026-05-30   <span class="y">&lt;3d</span>
- 3   cici                       2026-05-27   <span class="r">expired</span>
- 4   doni                       2026-07-01   <span class="g">active</span>
- 5   eka                        2026-06-22   <span class="g">active</span>
- 6   fauzan                     never        <span class="g">active</span>
- 7   gita                       2026-06-08   <span class="g">active</span>
-<span class="b">----------------------------------------------------------------</span>
-
- Tekan [Enter] untuk kembali...<span class="bold">_</span></pre>
-</div>
-
-<h2>7. Submenu System</h2>
+<h2>4. Submenu System (lengkap dengan BBR/IPv6/Update)</h2>
 <div class="term">
   <div class="bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
        <div class="ttl">m-system</div></div>
@@ -222,9 +134,26 @@
   <span class="g">6</span>) Cek detail spesifikasi VPS
   <span class="g">7</span>) Renew SSL certificate
   <span class="g">8</span>) Tampilkan info port
+  <span class="g">9</span>) Toggle BBR  (status: <span class="g">ENABLED</span>)
+  <span class="g">10</span>) Toggle IPv6 (status: <span class="r">DISABLED</span>)
+  <span class="g">11</span>) Update Script
   <span class="r">0</span>) Kembali
 <span class="b">----------------------------------------------------------------</span>
  Pilih menu: <span class="bold">_</span></pre>
+</div>
+
+<h2>5. Update Script</h2>
+<div class="term">
+  <div class="bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+       <div class="ttl">update-script</div></div>
+<pre><span class="b">================================================================</span>
+<span class="c bold">                       UPDATE SCRIPT</span>
+<span class="b">================================================================</span>
+ Pulling latest from https://github.com/fauzanihanipah/all-protocol.git ...
+ Already up to date.
+ <span class="g">[OK]</span> Update selesai. Menu/scripts versi terbaru sudah aktif.
+
+ Tekan [Enter] untuk kembali...<span class="bold">_</span></pre>
 </div>
 
 </body>

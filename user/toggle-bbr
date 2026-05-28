@@ -1,0 +1,43 @@
+#!/bin/bash
+. /usr/local/sbin/common.sh
+header "TOGGLE TCP BBR"
+
+current=$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null)
+qdisc=$(sysctl -n net.core.default_qdisc 2>/dev/null)
+echo -e "  Status sekarang : congestion = ${YELLOW}$current${NC}   qdisc = ${YELLOW}$qdisc${NC}"
+sline
+echo -e "  ${GREEN}1${NC}) Enable  BBR    (set fq + bbr, persistent)"
+echo -e "  ${GREEN}2${NC}) Disable BBR    (kembali ke cubic + fq_codel)"
+echo -e "  ${RED}0${NC}) Batal"
+sline
+read -rp " Pilih: " a
+case $a in
+  1)
+    if ! lsmod | grep -q "^tcp_bbr"; then
+        modprobe tcp_bbr 2>/dev/null
+        echo "tcp_bbr" >> /etc/modules-load.d/tcp_bbr.conf
+    fi
+    cat > /etc/sysctl.d/99-bbr.conf <<EOF
+# managed by all-protocol toggle-bbr
+net.core.default_qdisc=fq
+net.ipv4.tcp_congestion_control=bbr
+EOF
+    sysctl --system >/dev/null 2>&1
+    new=$(sysctl -n net.ipv4.tcp_congestion_control)
+    if [[ "$new" == "bbr" ]]; then
+        ok "BBR berhasil di-ENABLE.  current = $new"
+    else
+        fail "Gagal aktifkan BBR (kernel mungkin tidak support tcp_bbr)."
+    fi
+    ;;
+  2)
+    rm -f /etc/sysctl.d/99-bbr.conf
+    sysctl -w net.ipv4.tcp_congestion_control=cubic >/dev/null 2>&1
+    sysctl -w net.core.default_qdisc=fq_codel       >/dev/null 2>&1
+    sed -i '/tcp_bbr/d' /etc/modules-load.d/tcp_bbr.conf 2>/dev/null
+    ok "BBR di-DISABLE. Kembali ke cubic + fq_codel."
+    ;;
+  0|"") warn "Batal." ;;
+  *) fail "Pilihan tidak valid." ;;
+esac
+press_enter
