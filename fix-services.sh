@@ -17,9 +17,37 @@ warn() { echo -e " ${YELLOW}[!]${NC} $*"; }
 fail() { echo -e " ${RED}[X]${NC} $*"; }
 
 REPO=/opt/all-protocol
-[[ -d $REPO/.git ]] || git clone --depth 1 https://github.com/fauzanihanipah/all-protocol.git $REPO
-git -C $REPO pull --ff-only >/dev/null 2>&1 || true
-cd $REPO
+REPO_URL="https://github.com/fauzanihanipah/all-protocol.git"
+
+# Ensure repo is at latest commit (fall back to fresh re-clone if pull fails)
+if [[ -d "$REPO/.git" ]]; then
+    log "Pulling latest into $REPO ..."
+    if ! git -C "$REPO" pull --ff-only 2>&1 | sed 's/^/    /'; then
+        warn "git pull failed, doing fresh re-clone..."
+        rm -rf "$REPO"
+        git clone --depth 1 "$REPO_URL" "$REPO"
+    fi
+else
+    log "Cloning $REPO ..."
+    git clone --depth 1 "$REPO_URL" "$REPO"
+fi
+cd "$REPO"
+
+# Verify required files exist; if any missing, force re-clone
+need_files=(config/nginx.conf config/nginx-vhost.conf config/stunnel.conf
+            config/ws.py service/ws.service service/runn.service service/xray.service
+            menu/menu lib/common.sh)
+missing=0
+for f in "${need_files[@]}"; do
+    [[ -f "$REPO/$f" ]] || { warn "missing $f"; missing=1; }
+done
+if (( missing )); then
+    warn "Repo lokal tidak lengkap, force re-clone..."
+    cd /
+    rm -rf "$REPO"
+    git clone --depth 1 "$REPO_URL" "$REPO"
+    cd "$REPO"
+fi
 
 # 1) Pastikan paket nginx-stream terpasang
 log "Ensure nginx-stream module..."
