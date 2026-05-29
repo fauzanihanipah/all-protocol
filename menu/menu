@@ -6,7 +6,16 @@
 ip_local="$IP"
 [[ -z "$ip_local" ]] && ip_local=$(hostname -I | awk '{print $1}')
 domain=$(cat /etc/xray/domain 2>/dev/null)
-uptime_str=$(uptime -p 2>/dev/null | sed 's/up //')
+# Compact uptime: "1 day, 2 hours, 16 minutes" -> "1d 2h 16m" so it fits 33 cols.
+uptime_str=$(uptime -p 2>/dev/null | sed -E '
+    s/up //
+    s/ years?,?/y/g
+    s/ months?,?/mo/g
+    s/ weeks?,?/w/g
+    s/ days?,?/d/g
+    s/ hours?,?/h/g
+    s/ minutes?,?/m/g
+    s/, / /g')
 ram_used=$(free -m | awk '/Mem/ {print $3"M / "$2"M"}')
 date_now=$(date '+%Y-%m-%d %H:%M')
 bbr=$(bbr_status)

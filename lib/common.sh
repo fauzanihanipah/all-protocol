@@ -15,12 +15,16 @@ STUNNEL_SVC=stunnel4
 systemctl list-unit-files 2>/dev/null | grep -q '^stunnel4\.service' || STUNNEL_SVC=stunnel
 
 # ---------- UI helpers ----------
-line()       { echo -e "${BLUE}================================================================${NC}"; }
-sline()      { echo -e "${BLUE}----------------------------------------------------------------${NC}"; }
+# All box rendering shares one width: inner content = 70, full row width = 72.
+# We generate the horizontal lines via printf so the count is impossible to
+# miscount by eye.
+__hline() { local ch="$1" w="$2"; printf -- "$ch%.0s" $(seq 1 "$w"); }
+line()       { echo -e "${BLUE}$(__hline = 72)${NC}"; }
+sline()      { echo -e "${BLUE}$(__hline - 72)${NC}"; }
 header() {
     clear
     line
-    printf "${CYAN}%*s${NC}\n" $(( (64 + ${#1}) / 2 )) "$1"
+    printf "${CYAN}%*s${NC}\n" $(( (72 + ${#1}) / 2 )) "$1"
     line
 }
 press_enter() {
@@ -84,32 +88,41 @@ svc_status() {
 visible_len() {
     echo -n "$1" | sed -E 's/\x1B\[[0-9;]*[mK]//g' | wc -m
 }
-# Pad string $1 to visible width $2.
+# Pad string $1 to visible width $2. If the string is *longer* than the
+# target width, truncate to (w-1) chars and append '…' so the box border
+# never gets pushed and the misalignment we used to have can't recur.
 pad() {
     local s="$1" w="$2" vl
     vl=$(visible_len "$s")
+    if (( vl > w )); then
+        # Strip ANSI for plain truncation (we keep raw bytes for ASCII menus)
+        local plain; plain=$(echo -n "$s" | sed -E 's/\x1B\[[0-9;]*[mK]//g')
+        s="${plain:0:$((w-1))}…"
+        vl=$w
+    fi
     local n=$(( w - vl ))
     (( n < 0 )) && n=0
     printf "%s%*s" "$s" "$n" ""
 }
-# Box characters – outer width 66 chars, inner width 64.
-# Row layout: ║ <left,30> │ <right,31> ║   => 1+1+30+1+1+1+31+1 = 66 ✓ ... actually
-# Layout:     ║ + " "(1) + L(30) + " "(1) + │ + " "(1) + R(31) + " "(0) + ║
-top_line()    { echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"; }
-mid_line()    { echo -e "${BLUE}╠══════════════════════════════════════════════════════════════════╣${NC}"; }
-bot_line()    { echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"; }
-# Single full-width row (64 visible content chars between borders).
+# Box characters - outer width 72 columns, inner content 70.
+# Layout (single col):  ║ + " " + content(68) + " " + ║   = 1+1+68+1+1 = 72
+# Layout (two columns): ║ + " " + L(33) + " " + │ + " " + R(33) + ║ = 72
+# Horizontal lines are generated via printf so corner-to-corner is exactly 70.
+top_line()    { echo -e "${BLUE}╔$(__hline ═ 70)╗${NC}"; }
+mid_line()    { echo -e "${BLUE}╠$(__hline ═ 70)╣${NC}"; }
+bot_line()    { echo -e "${BLUE}╚$(__hline ═ 70)╝${NC}"; }
+# Single full-width row (68 visible content chars between borders).
 single_row() {
-    printf "${BLUE}║${NC} %s ${BLUE}║${NC}\n" "$(pad "$1" 64)"
+    printf "${BLUE}║${NC} %s ${BLUE}║${NC}\n" "$(pad "$1" 68)"
 }
-# Two-column row: left padded to 30, right padded to 31.
+# Two-column row: left and right both 33 cols, no trailing space before right ║.
 row2() {
     printf "${BLUE}║${NC} %s ${BLUE}│${NC} %s${BLUE}║${NC}\n" \
-        "$(pad "$1" 30)" "$(pad "$2" 31)"
+        "$(pad "$1" 33)" "$(pad "$2" 33)"
 }
 # Centered title row (white-on-blue look).
 title_row() {
-    local s="$1" w=64
+    local s="$1" w=68
     local vl; vl=$(visible_len "$s")
     local left=$(( (w - vl) / 2 ))
     local right=$(( w - vl - left ))
