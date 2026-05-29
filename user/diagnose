@@ -59,4 +59,32 @@ test_ssl_port "Stunnel backend :7443" 127.0.0.1 7443 ""
 test_ssl_port "Mux 443 no-SNI"        127.0.0.1 443  ""
 DOMAIN=$(cat /etc/xray/domain 2>/dev/null || cat /root/domain 2>/dev/null)
 [[ -n "$DOMAIN" ]] && test_ssl_port "Mux 443 SNI=$DOMAIN" 127.0.0.1 443 "-servername $DOMAIN"
+
+sline; echo -e "${CYAN}>>> SSH-WS handshake test${NC}"
+test_ws() {
+    local label="$1" port="$2" path="$3" tls="$4"
+    local req=$(printf 'GET %s HTTP/1.1\r\nHost: %s\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n\r\n' "$path" "${DOMAIN:-localhost}")
+    local out
+    if [[ "$tls" = "tls" ]]; then
+        out=$(printf '%s' "$req" | timeout 5 openssl s_client -connect "127.0.0.1:$port" -servername "$DOMAIN" -quiet 2>/dev/null | head -c 400)
+    else
+        out=$(printf '%s' "$req" | timeout 5 nc 127.0.0.1 "$port" 2>/dev/null | head -c 400)
+    fi
+    if echo "$out" | grep -q '101 Switching' && echo "$out" | grep -qE 'SSH-2\.0-(dropbear|OpenSSH)'; then
+        ok "$label -> 101 + SSH banner"
+    elif echo "$out" | grep -q '101 Switching'; then
+        warn "$label -> 101 (upgrade OK) tapi banner SSH belum sampai (timing)"
+    elif echo "$out" | grep -q 'HTTP/1.1 200'; then
+        fail "$label -> 200 OK (path tidak ke-route ke ws-py, klien sebaiknya pakai /ssh-ws atau header Upgrade)"
+    elif echo "$out" | grep -qE 'HTTP/1.1 (404|400)'; then
+        fail "$label -> $(echo "$out" | head -1) (nginx routing salah)"
+    else
+        fail "$label -> tidak ada response yang dikenali"
+    fi
+}
+test_ws "WS :80  path /ssh-ws"     80   /ssh-ws  ""
+test_ws "WS :80  path / (Upgrade)" 80   /        ""
+[[ -n "$DOMAIN" ]] && test_ws "WSS :443 path /ssh-ws"    443  /ssh-ws  tls
+[[ -n "$DOMAIN" ]] && test_ws "WSS :443 path / (Upgrade)" 443 /        tls
+
 press_enter

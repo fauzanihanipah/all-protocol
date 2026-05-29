@@ -5,8 +5,8 @@ cat <<EOF
 ${BLUE}----------------------------------------------------------------${NC}
  Domain         : $DOMAIN
  IP             : $IP
- Path WS        : /ssh-ws
- SSH host:port  : 127.0.0.1:22
+ Path WS        : /ssh-ws  (atau / dengan header Upgrade: websocket)
+ SSH backend    : Dropbear  (port internal 109, transparent dari klien)
 ${BLUE}════════════════════════════════════════════════════════════════${NC}
                 ${YELLOW}NON-TLS  (port 80,  SSL=OFF)${NC}
 ${BLUE}----------------------------------------------------------------${NC}

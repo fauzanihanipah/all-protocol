@@ -1,7 +1,7 @@
 [Unit]
 Description=All-Protocol WS Proxy (SSH-WebSocket bridge)
-After=network.target ssh.service
-Requires=ssh.service
+After=network.target dropbear.service
+Wants=dropbear.service
 
 [Service]
 Type=simple
