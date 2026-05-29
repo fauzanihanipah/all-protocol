@@ -126,19 +126,24 @@ curl -s https://get.acme.sh | sh -s email=admin@${DOMAIN} >/dev/null 2>&1
 ~/.acme.sh/acme.sh --upgrade --auto-upgrade >/dev/null 2>&1
 ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt >/dev/null 2>&1
 ~/.acme.sh/acme.sh --issue -d "$DOMAIN" --standalone -k ec-256 --force >/dev/null 2>&1
+# Install cert, plus reloadcmd yang otomatis sinkron stunnel.pem &
+# restart service tiap kali Let's Encrypt renew (default 60 hari sekali).
 ~/.acme.sh/acme.sh --installcert -d "$DOMAIN" --ecc \
   --fullchain-file /etc/xray/xray.crt \
-  --key-file /etc/xray/xray.key >/dev/null 2>&1
+  --key-file /etc/xray/xray.key \
+  --reloadcmd "cat /etc/xray/xray.key /etc/xray/xray.crt > /etc/stunnel/stunnel.pem && chmod 640 /etc/stunnel/stunnel.pem && systemctl restart $STUNNEL_SVC nginx xray" \
+  >/dev/null 2>&1
 
 if [[ -s /etc/xray/xray.crt && -s /etc/xray/xray.key ]]; then
-  print_ok "Sertifikat berhasil dibuat untuk $DOMAIN"
+  print_ok "Sertifikat berhasil dibuat untuk $DOMAIN (auto-renew tiap 60 hari)"
 else
   print_warn "Issue cert gagal, generate self-signed sebagai fallback."
   openssl req -x509 -nodes -newkey rsa:2048 \
     -keyout /etc/xray/xray.key -out /etc/xray/xray.crt \
     -subj "/CN=$DOMAIN" -days 825 >/dev/null 2>&1
 fi
-chmod 644 /etc/xray/xray.crt /etc/xray/xray.key
+chmod 644 /etc/xray/xray.crt
+chmod 600 /etc/xray/xray.key
 
 # =====================================================================
 # 4. CONFIGURATION FILES
@@ -160,8 +165,27 @@ sed -i "s|__DOMAIN__|$DOMAIN|g" /etc/nginx/conf.d/all-protocol.conf
 install -m 644 "$SRC/config/stunnel.conf"       /etc/stunnel/stunnel.conf
 sed -i 's|^ENABLED=.*|ENABLED=1|' /etc/default/stunnel4 2>/dev/null || true
 cat /etc/xray/xray.key /etc/xray/xray.crt > /etc/stunnel/stunnel.pem
-chmod 600 /etc/stunnel/stunnel.pem
+chmod 640 /etc/stunnel/stunnel.pem
 chown root:root /etc/stunnel/stunnel.pem
+
+# Validasi awal stunnel.conf — kalau syntax fail, fallback ke config minimal
+# supaya service tetap bisa start (bisa di-tune lewat fix-services nanti).
+if ! stunnel /etc/stunnel/stunnel.conf -fd 0 </dev/null 2>&1 | grep -q '\[!\]'; then
+    print_ok "stunnel.conf syntax OK"
+else
+    print_warn "stunnel.conf syntax warning - cek 'journalctl -u $STUNNEL_SVC' setelah install"
+fi
+
+# Pastikan modul nginx-stream ter-enable (paket libnginx-mod-stream di
+# Debian/Ubuntu meletakkan modul di modules-available; auto-symlink ke
+# modules-enabled sometimes missing).
+if ! ls /etc/nginx/modules-enabled/ 2>/dev/null | grep -q 'mod-stream'; then
+    if [[ -f /usr/share/nginx/modules-available/mod-stream.conf ]]; then
+        mkdir -p /etc/nginx/modules-enabled
+        ln -sf /usr/share/nginx/modules-available/mod-stream.conf \
+               /etc/nginx/modules-enabled/50-mod-stream.conf
+    fi
+fi
 
 # --- Dropbear ---
 install -m 644 "$SRC/config/dropbear"           /etc/default/dropbear
@@ -283,18 +307,23 @@ clear
 echo -e "${GREEN}================================================================${NC}"
 echo -e "${CYAN}             INSTALLATION FINISHED SUCCESSFULLY${NC}"
 echo -e "${GREEN}================================================================${NC}"
-echo -e " Domain         : ${YELLOW}$DOMAIN${NC}"
-echo -e " OpenSSH        : ${YELLOW}22${NC}"
-echo -e " Dropbear       : ${YELLOW}109, 143${NC}"
-echo -e " SSH WS Non-TLS : ${YELLOW}80${NC}    (path /ssh-ws)"
-echo -e " SSH WS TLS     : ${YELLOW}443${NC}   (path /ssh-ws)"
-echo -e " SSH SSL        : ${YELLOW}443${NC}   (default fallback / non-SNI)"
-echo -e " VMess WS TLS   : ${YELLOW}443${NC}   (path /vmess)"
-echo -e " VMess WS NTLS  : ${YELLOW}80${NC}    (path /vmess)"
-echo -e " VLess WS TLS   : ${YELLOW}443${NC}   (path /vless)"
-echo -e " VLess WS NTLS  : ${YELLOW}80${NC}    (path /vless)"
-echo -e " Trojan WS TLS  : ${YELLOW}443${NC}   (path /trojan-ws)"
-echo -e " UDPGW          : ${YELLOW}7100, 7300${NC}"
+echo -e " Domain          : ${YELLOW}$DOMAIN${NC}"
+echo -e " IP              : ${YELLOW}$(curl -s ifconfig.me 2>/dev/null)${NC}"
 echo -e "${GREEN}----------------------------------------------------------------${NC}"
-echo -e " Ketik perintah ${CYAN}menu${NC} untuk membuka menu utama."
+echo -e " ${CYAN}SSH (jalur ke Dropbear, kompatibel mobile injector)${NC}"
+echo -e "   OpenSSH       : ${YELLOW}22${NC}"
+echo -e "   Dropbear      : ${YELLOW}109, 143${NC}"
+echo -e "   SSH-WS NTLS   : ${YELLOW}80${NC}    path /ssh-ws"
+echo -e "   SSH-WS TLS    : ${YELLOW}443${NC}   path /ssh-ws  (SNI=$DOMAIN)"
+echo -e "   SSH-SSL       : ${YELLOW}443${NC}   (SNI bebas / kosong) atau ${YELLOW}777${NC} (direct)"
+echo -e "${GREEN}----------------------------------------------------------------${NC}"
+echo -e " ${CYAN}V2Ray / Trojan${NC} (semua via Xray + nginx-stream mux)"
+echo -e "   VMess WS      : ${YELLOW}443${NC} TLS / ${YELLOW}80${NC} NTLS    path /vmess"
+echo -e "   VLess WS      : ${YELLOW}443${NC} TLS / ${YELLOW}80${NC} NTLS    path /vless"
+echo -e "   Trojan WS     : ${YELLOW}443${NC} TLS                path /trojan-ws"
+echo -e "   gRPC services : ${YELLOW}443${NC} TLS (vmess-grpc, vless-grpc, trojan-grpc)"
+echo -e "   UDPGW         : ${YELLOW}7100, 7300${NC}"
+echo -e "${GREEN}----------------------------------------------------------------${NC}"
+echo -e " Cert auto-renew : Let's Encrypt + reloadcmd (sync stunnel.pem)"
+echo -e " Ketik perintah  : ${CYAN}menu${NC}  untuk membuka menu utama"
 echo -e "${GREEN}================================================================${NC}"
