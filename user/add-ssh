@@ -45,6 +45,19 @@ ${BLUE}----------------------------------------------------------------${NC}
 ${BLUE}----------------------------------------------------------------${NC}
 GET / HTTP/1.1[crlf]Host: $DOMAIN[crlf][crlf]GET wss://$DOMAIN/ssh-ws HTTP/1.1[crlf]Host: $DOMAIN[crlf]Upgrade: websocket[crlf][crlf]
 ${BLUE}════════════════════════════════════════════════════════════════${NC}
+                ${YELLOW}PAYLOAD BUG-HOST INJECTION  (bypass DPI ISP)${NC}
+${BLUE}----------------------------------------------------------------${NC}
+ Untuk bypass paket data ISP yang gratis ke domain tertentu (Spotify,
+ Facebook, WhatsApp, dll). Field 'Server' di app TETAP $DOMAIN, hanya
+ header Host: yang diganti BUGHOST. Nginx kita auto-accept Host apa pun.
+${BLUE}----------------------------------------------------------------${NC}
+GET /ssh-ws HTTP/1.1[crlf]Host: BUGHOST[crlf]Upgrade: websocket[crlf]Connection: keep-alive, Upgrade[crlf][crlf]
+
+ Contoh BUGHOST yang sering dipakai (cek pulsa/kuota gratis ISP-mu):
+   - investors.spotify.com   (paket Spotify)
+   - api.whatsapp.com         (paket WhatsApp)
+   - graph.facebook.com       (paket Facebook)
+${BLUE}════════════════════════════════════════════════════════════════${NC}
  Catatan:
    - SSL/TLS    : ON  untuk port 443  |  OFF untuk port 80
    - SNI (TLS)  : $DOMAIN
