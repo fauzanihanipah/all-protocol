@@ -8,18 +8,16 @@ ip_local="$IP"
 domain=$(cat /etc/xray/domain 2>/dev/null)
 uptime_str=$(uptime -p 2>/dev/null | sed 's/up //')
 ram_used=$(free -m | awk '/Mem/ {print $3"M / "$2"M"}')
-load_avg=$(awk '{print $1", "$2", "$3}' /proc/loadavg)
 date_now=$(date '+%Y-%m-%d %H:%M')
 bbr=$(bbr_status)
 ipv6=$(ipv6_status)
+os_name=$(. /etc/os-release; echo "$PRETTY_NAME" | sed 's/ (.*)//')
 
-# -- service status --
-s_ssh=$(svc_status ssh);          s_dropb=$(svc_status dropbear)
-s_ngx=$(svc_status nginx);        s_xray=$(svc_status xray)
-s_stun=$(svc_status "$STUNNEL_SVC");    s_ws=$(svc_status ws)
-s_udp=$(svc_status runn)
+# -- compact one-line service status --
+svc_one() { systemctl is-active --quiet "$1" && echo -e "${GREEN}${1%%-*}${NC}" || echo -e "${RED}${1%%-*}${NC}"; }
+services_line=" $(svc_one ssh) $(svc_one dropbear) $(svc_one nginx) $(svc_one xray) $(svc_one "$STUNNEL_SVC") $(svc_one ws) $(svc_one runn)"
 
-# -- active users --
+# -- active user counts --
 ssh_n=$(awk -F: '($3>=1000)&&($1!="nobody"){print $1}' /etc/passwd | wc -l)
 vmess_n=$(jq '[.inbounds[]|select(.tag=="vmess-ws")|.settings.clients[]]|length' "$XRAY_CONFIG" 2>/dev/null)
 vless_n=$(jq '[.inbounds[]|select(.tag=="vless-ws")|.settings.clients[]]|length' "$XRAY_CONFIG" 2>/dev/null)
@@ -28,32 +26,27 @@ trojan_n=$(jq '[.inbounds[]|select(.tag=="trojan-ws")|.settings.clients[]]|lengt
 # -------------------------------------------------------------------
 clear
 top_line
-single_row ""
-title_row  "ALL-PROTOCOL TUNNEL  --  CONTROL PANEL"
-single_row ""
+title_row "ALL-PROTOCOL TUNNEL  -  CONTROL PANEL"
 mid_line
 
-# left = VPS info        right = Service status
-row2 " ${WHITE}IP        ${NC}: ${ip_local}"        " ${WHITE}ssh        ${NC}: ${s_ssh}"
-row2 " ${WHITE}Domain    ${NC}: ${domain}"          " ${WHITE}dropbear   ${NC}: ${s_dropb}"
-row2 " ${WHITE}Uptime    ${NC}: ${uptime_str}"      " ${WHITE}nginx      ${NC}: ${s_ngx}"
-row2 " ${WHITE}Memory    ${NC}: ${ram_used}"        " ${WHITE}xray       ${NC}: ${s_xray}"
-row2 " ${WHITE}Load Avg  ${NC}: ${load_avg}"        " ${WHITE}stunnel    ${NC}: ${s_stun}"
-row2 " ${WHITE}Date      ${NC}: ${date_now}"        " ${WHITE}ws         ${NC}: ${s_ws}"
-row2 " ${WHITE}BBR       ${NC}: ${bbr}"             " ${WHITE}udpgw      ${NC}: ${s_udp}"
-row2 " ${WHITE}IPv6      ${NC}: ${ipv6}"            ""
+# 3 compact info rows (left/right)
+row2 " ${WHITE}IP    ${NC}: ${ip_local}"          " ${WHITE}OS    ${NC}: ${os_name}"
+row2 " ${WHITE}Domain${NC}: ${domain:-(belum diset)}" " ${WHITE}Uptime${NC}: ${uptime_str:-?}"
+row2 " ${WHITE}RAM   ${NC}: ${ram_used}"          " ${WHITE}Date  ${NC}: ${date_now}"
+row2 " ${WHITE}BBR   ${NC}: ${bbr}"               " ${WHITE}IPv6  ${NC}: ${ipv6}"
 mid_line
 
-# active users summary (full-width row)
-single_row " ${WHITE}Active Users${NC}  :  ${YELLOW}SSH=${ssh_n}   VMess=${vmess_n}   VLess=${vless_n}   Trojan=${trojan_n}${NC}"
+# Compact services row + users row
+single_row " ${WHITE}Service${NC}:${services_line}"
+single_row " ${WHITE}Users  ${NC}: ${YELLOW}SSH=${ssh_n}   VMess=${vmess_n}   VLess=${vless_n}   Trojan=${trojan_n}${NC}"
 mid_line
 
-# Menu options - 2 columns
-row2 "   ${GREEN}1${NC}) Menu SSH / SSH-WS / SSL"  "  ${GREEN}6${NC}) Restart All Services"
-row2 "   ${GREEN}2${NC}) Menu V2Ray VMess"         "  ${GREEN}7${NC}) Toggle BBR"
-row2 "   ${GREEN}3${NC}) Menu V2Ray VLess"         "  ${GREEN}8${NC}) Toggle IPv6"
-row2 "   ${GREEN}4${NC}) Menu Trojan"              "  ${GREEN}9${NC}) Update Script"
-row2 "   ${GREEN}5${NC}) Menu System"              "  ${RED}0${NC}) Exit"
+# Menu options - 2 columns, 5 rows (10 items + Exit)
+row2 "   ${GREEN}1${NC}) SSH / SSH-WS / SSH-SSL"   "   ${GREEN}6${NC}) Restart All Services"
+row2 "   ${GREEN}2${NC}) V2Ray VMess"              "   ${GREEN}7${NC}) Toggle BBR"
+row2 "   ${GREEN}3${NC}) V2Ray VLess"              "   ${GREEN}8${NC}) Toggle IPv6"
+row2 "   ${GREEN}4${NC}) Trojan"                   "   ${GREEN}9${NC}) Update Script"
+row2 "   ${GREEN}5${NC}) System & Tools"           "   ${RED}0${NC}) Exit"
 bot_line
 
 read -rp "                       Pilih menu : " opt
